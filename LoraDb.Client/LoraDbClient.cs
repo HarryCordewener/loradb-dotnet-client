@@ -3,7 +3,7 @@ using LoraDb.Client.Transports;
 
 namespace LoraDb.Client;
 
-public sealed class LoraDbClient : IAsyncDisposable
+public sealed class LoraDbClient : ILoraDbClient
 {
     private readonly ILoraDbTransport _transport;
 
@@ -23,14 +23,14 @@ public sealed class LoraDbClient : IAsyncDisposable
         return new LoraDbClient(new EmbeddedLoraDbTransport(nativeBridge ?? new PInvokeLoraDbNativeBridge()));
     }
 
-    public Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters = null, CancellationToken cancellationToken = default)
+    public Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters = null, string format = Models.LoraDbQueryRequest.DefaultFormat, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
             throw new ArgumentException("Query cannot be null or whitespace.", nameof(query));
         }
 
-        return _transport.ExecuteAsync(query, parameters, cancellationToken);
+        return _transport.ExecuteAsync(query, parameters, format, cancellationToken);
     }
 
     public ValueTask DisposeAsync() => _transport.DisposeAsync();

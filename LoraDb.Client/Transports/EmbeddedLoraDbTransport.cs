@@ -13,7 +13,7 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
         _nativeBridge = nativeBridge ?? throw new ArgumentNullException(nameof(nativeBridge));
     }
 
-    public Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken)
+    public Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters, string format, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -21,6 +21,7 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
         {
             Query = query,
             Parameters = parameters,
+            Format = format,
         };
 
         var requestJson = JsonSerializer.Serialize(request);

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using LoraDb.Client.Models;
 
@@ -6,6 +7,11 @@ namespace LoraDb.Client.Transports;
 
 public sealed class HttpLoraDbTransport : ILoraDbTransport
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
 
@@ -22,15 +28,16 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
         }
     }
 
-    public async Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken)
+    public async Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters, string format, CancellationToken cancellationToken)
     {
         var request = new LoraDbQueryRequest
         {
             Query = query,
             Parameters = parameters,
+            Format = format,
         };
 
-        using var response = await _httpClient.PostAsJsonAsync("query", request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.PostAsJsonAsync("query", request, SerializerOptions, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
         using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);

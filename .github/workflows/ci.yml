@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -21,4 +26,10 @@ jobs:
       - name: Build
         run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
       - name: Test
-        run: dotnet test LoraDb.Client.slnx --configuration Release --no-build
+        run: dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj --configuration Release --no-build -- --coverage --coverage-output-format cobertura
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          files: "**/*.cobertura.xml"
+          fail_ci_if_error: false

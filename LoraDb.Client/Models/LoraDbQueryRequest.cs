@@ -10,6 +10,7 @@ public sealed class LoraDbQueryRequest
     public required string Query { get; init; }
 
     [JsonPropertyName("params")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyDictionary<string, object?>? Parameters { get; init; }
 
     [JsonPropertyName("format")]
