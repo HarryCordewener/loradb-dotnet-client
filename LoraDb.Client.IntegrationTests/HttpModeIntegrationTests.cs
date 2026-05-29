@@ -15,8 +15,7 @@ public class HttpModeIntegrationTests
         if (string.IsNullOrWhiteSpace(image))
             throw new InvalidOperationException("Set LORADB_HTTP_IMAGE when LORADB_RUN_INTEGRATION_TESTS is enabled.");
 
-        await using var container = new ContainerBuilder()
-            .WithImage(image)
+        await using var container = new ContainerBuilder(image)
             .WithPortBinding(4747, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(4747))
             .Build();
@@ -28,7 +27,20 @@ public class HttpModeIntegrationTests
 
         await using var client = LoraDbClient.CreateHttp(endpoint);
         using var result = await client.ExecuteAsync("RETURN 1 AS one");
+        await AssertSingleIntegerResult(result, "one", 1);
 
-        await Assert.That(result.Root.TryGetProperty("rows", out _)).IsTrue();
+        using var parameterizedResult = await client.ExecuteAsync(
+            "RETURN $value + 1 AS incremented",
+            new Dictionary<string, object?> { ["value"] = 1 });
+        await AssertSingleIntegerResult(parameterizedResult, "incremented", 2);
+    }
+
+    private static async Task AssertSingleIntegerResult(LoraDbQueryResult result, string column, int expected)
+    {
+        var rows = result.Root.GetProperty("rows");
+        await Assert.That(rows.GetArrayLength()).IsEqualTo(1);
+
+        var value = rows[0].GetProperty(column).GetInt32();
+        await Assert.That(value).IsEqualTo(expected);
     }
 }
