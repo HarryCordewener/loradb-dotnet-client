@@ -8,6 +8,7 @@ namespace LoraDb.Client.IntegrationTests;
 public class ParameterIntegrationTests : IntegrationTestBase
 {
     [Test]
+    [CombinedDataSources]
     public async Task NamedStringParameter_FiltersCorrectly(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -23,6 +24,7 @@ public class ParameterIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task NamedIntegerParameter_FiltersAndComputes(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -39,6 +41,7 @@ public class ParameterIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task NamedFloatParameter_RoundTripsWithoutPrecisionLoss(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -54,6 +57,7 @@ public class ParameterIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task NamedBooleanParameter_FiltersCorrectly(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -69,6 +73,7 @@ public class ParameterIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task NamedParameter_InCreate_IsStoredAndReturned(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -84,6 +89,7 @@ public class ParameterIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task NullParameter_BehavesAsNullInWhereCheck(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -99,6 +105,7 @@ public class ParameterIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task MultipleParameters_InSingleQuery_AreAllApplied(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]

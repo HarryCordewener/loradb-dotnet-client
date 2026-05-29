@@ -8,6 +8,7 @@ namespace LoraDb.Client.IntegrationTests;
 public class AggregationIntegrationTests : IntegrationTestBase
 {
     [Test]
+    [CombinedDataSources]
     public async Task Count_ReturnsSeededNodeCount(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -21,6 +22,7 @@ public class AggregationIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task Sum_ReturnsCorrectTotal(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -34,6 +36,7 @@ public class AggregationIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task Average_ReturnsCorrectValue(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -47,6 +50,7 @@ public class AggregationIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task MinAndMax_ReturnCorrectBoundaries(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -61,6 +65,7 @@ public class AggregationIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task Collect_ReturnsAllNames(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -78,6 +83,7 @@ public class AggregationIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task GroupedAggregation_ReturnsCountsPerCategory(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]

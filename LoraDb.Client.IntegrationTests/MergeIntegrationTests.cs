@@ -8,6 +8,7 @@ namespace LoraDb.Client.IntegrationTests;
 public class MergeIntegrationTests : IntegrationTestBase
 {
     [Test]
+    [CombinedDataSources]
     public async Task Merge_CreatesWhenAbsent(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -21,6 +22,7 @@ public class MergeIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task Merge_IsIdempotent(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -36,6 +38,7 @@ public class MergeIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task MergeWithOnCreateSet_AppliesOnlyOnCreation(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -52,6 +55,7 @@ public class MergeIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task MergeWithOnMatchSet_AppliesOnlyOnMatch(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -67,6 +71,7 @@ public class MergeIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task MergeRelationship_BetweenExistingNodes_IsCreatedOnce(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]

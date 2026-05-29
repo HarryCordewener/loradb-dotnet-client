@@ -8,6 +8,7 @@ namespace LoraDb.Client.IntegrationTests;
 public class ExpressionIntegrationTests : IntegrationTestBase
 {
     [Test]
+    [CombinedDataSources]
     public async Task ArithmeticExpression_ReturnsExpectedValue(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -21,6 +22,7 @@ public class ExpressionIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task StringConcatenation_ReturnsCombinedString(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -34,6 +36,7 @@ public class ExpressionIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task BooleanLogic_ReturnsExpectedValue(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -47,6 +50,7 @@ public class ExpressionIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task CaseExpression_PicksCorrectBranch(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -60,6 +64,7 @@ public class ExpressionIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task UnwindList_ExpandsToMultipleRows(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -73,6 +78,7 @@ public class ExpressionIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task ListIndexing_OnProperty_ReturnsExpectedElement(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]

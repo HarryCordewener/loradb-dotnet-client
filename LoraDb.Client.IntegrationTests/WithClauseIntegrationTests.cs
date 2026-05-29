@@ -8,6 +8,7 @@ namespace LoraDb.Client.IntegrationTests;
 public class WithClauseIntegrationTests : IntegrationTestBase
 {
     [Test]
+    [CombinedDataSources]
     public async Task With_PassesVariableToNextClause(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -21,6 +22,7 @@ public class WithClauseIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task With_Aggregation_PipesIntoReturn(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -34,6 +36,7 @@ public class WithClauseIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task WithAndWhere_FiltersAfterAggregation(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -48,6 +51,7 @@ public class WithClauseIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [CombinedDataSources]
     public async Task WithOrderByAndSkip_PagesBeforeSecondMatch(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
