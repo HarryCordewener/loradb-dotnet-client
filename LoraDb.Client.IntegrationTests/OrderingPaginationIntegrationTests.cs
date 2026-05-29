@@ -63,7 +63,7 @@ public class OrderingPaginationIntegrationTests : IntegrationTestBase
 
     [Test]
     [CombinedDataSources]
-    public async Task SkipAndLimit_ReturnRequestedPage(
+    public async Task SkipAndLimit_ReturnsRequestedPage(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
         ILoraDbClientFixture fixture)
