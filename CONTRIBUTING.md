@@ -25,6 +25,12 @@ Run them with:
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
 ```
 
+To run integration tests in GitHub Actions, set these repository variables:
+
+- `RUN_LORADB_INTEGRATION=true`
+- `LORADB_HTTP_IMAGE=<loradb-server-image>`
+- `LORADB_FFI_LIBRARY_PATH=<absolute-path-on-runner-to-lora_ffi-binary>`
+
 ## Commit conventions
 
 We use [Conventional Commits](https://www.conventionalcommits.org/) so that

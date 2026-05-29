@@ -6,7 +6,7 @@ namespace LoraDb.Client.IntegrationTests;
 public class HttpModeIntegrationTests
 {
     [Test]
-    public async Task ExecuteAsync_HTTPMode_WorksAgainstRealServerContainer()
+    public async Task ExecuteAsync_HttpMode_WorksAgainstRealServerContainer()
     {
         if (!IntegrationTestEnvironment.IsEnabled())
             return;
