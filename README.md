@@ -41,3 +41,15 @@ dotnet restore LoraDb.Client.slnx
 dotnet build LoraDb.Client.slnx
 dotnet test LoraDb.Client.slnx
 ```
+
+### Optional integration tests
+
+Integration tests are opt-in and exercise real HTTP and Embedded modes:
+
+- `LORADB_RUN_INTEGRATION_TESTS=1`
+- `LORADB_HTTP_IMAGE=<loradb-server-image>`
+- `LORADB_FFI_LIBRARY_PATH=<absolute-path-to-lora_ffi-binary>`
+
+```bash
+dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
+```

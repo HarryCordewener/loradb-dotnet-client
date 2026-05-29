@@ -33,3 +33,23 @@ jobs:
         with:
           files: "**/*.cobertura.xml"
           fail_ci_if_error: false
+
+  integration:
+    name: integration (opt-in)
+    if: vars.RUN_LORADB_INTEGRATION == 'true'
+    runs-on: ubuntu-latest
+    env:
+      LORADB_RUN_INTEGRATION_TESTS: "1"
+      LORADB_HTTP_IMAGE: ${{ vars.LORADB_HTTP_IMAGE }}
+      LORADB_FFI_LIBRARY_PATH: ${{ vars.LORADB_FFI_LIBRARY_PATH }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore LoraDb.Client.slnx
+      - name: Build
+        run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
+      - name: Run integration tests
+        run: dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj --configuration Release --no-build

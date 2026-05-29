@@ -11,6 +11,20 @@ Thank you for considering contributing! Please follow these guidelines.
 5. Run `dotnet test LoraDb.Client.slnx` to run the test suite.
    > **Note:** With the .NET 10+ SDK you may need to use `dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj` instead if `dotnet test` reports a VSTest compatibility error.
 
+## Integration tests
+
+Integration tests are gated and only run when explicitly enabled.
+
+- Set `LORADB_RUN_INTEGRATION_TESTS=1` to enable them.
+- Set `LORADB_HTTP_IMAGE` to a LoraDB server container image for HTTP mode testing.
+- Set `LORADB_FFI_LIBRARY_PATH` to a real `lora_ffi` binary path for Embedded mode testing.
+
+Run them with:
+
+```bash
+dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
+```
+
 ## Commit conventions
 
 We use [Conventional Commits](https://www.conventionalcommits.org/) so that
