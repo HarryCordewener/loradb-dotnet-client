@@ -7,23 +7,20 @@ public sealed class LoraDbClient : IAsyncDisposable
 {
     private readonly ILoraDbTransport _transport;
 
-    private LoraDbClientMode Mode { get; }
-
-    private LoraDbClient(LoraDbClientMode mode, ILoraDbTransport transport)
+    private LoraDbClient(ILoraDbTransport transport)
     {
-        Mode = mode;
         _transport = transport;
     }
 
     public static LoraDbClient CreateHttp(Uri endpoint, HttpClient? httpClient = null)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
-        return new LoraDbClient(LoraDbClientMode.Http, new HttpLoraDbTransport(endpoint, httpClient));
+        return new LoraDbClient(new HttpLoraDbTransport(endpoint, httpClient));
     }
 
     public static LoraDbClient CreateEmbedded(ILoraDbNativeBridge? nativeBridge = null)
     {
-        return new LoraDbClient(LoraDbClientMode.Embedded, new EmbeddedLoraDbTransport(nativeBridge ?? new PInvokeLoraDbNativeBridge()));
+        return new LoraDbClient(new EmbeddedLoraDbTransport(nativeBridge ?? new PInvokeLoraDbNativeBridge()));
     }
 
     public Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters = null, CancellationToken cancellationToken = default)

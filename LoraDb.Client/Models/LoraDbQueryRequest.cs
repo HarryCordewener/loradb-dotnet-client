@@ -4,6 +4,8 @@ namespace LoraDb.Client.Models;
 
 public sealed class LoraDbQueryRequest
 {
+    public const string DefaultFormat = "rows";
+
     [JsonPropertyName("query")]
     public required string Query { get; init; }
 
@@ -11,5 +13,5 @@ public sealed class LoraDbQueryRequest
     public IReadOnlyDictionary<string, object?>? Parameters { get; init; }
 
     [JsonPropertyName("format")]
-    public string Format { get; init; } = "rows";
+    public string Format { get; init; } = DefaultFormat;
 }

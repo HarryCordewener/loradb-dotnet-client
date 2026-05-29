@@ -4,7 +4,7 @@ namespace LoraDb.Client.Native;
 
 public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
 {
-    private readonly nint _libraryHandle;
+    private nint _libraryHandle;
     private readonly ExecuteJsonDelegate _executeJson;
     private readonly FreeStringDelegate _freeString;
 
@@ -45,6 +45,7 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
         if (_libraryHandle != nint.Zero)
         {
             NativeLibrary.Free(_libraryHandle);
+            _libraryHandle = nint.Zero;
         }
     }
 

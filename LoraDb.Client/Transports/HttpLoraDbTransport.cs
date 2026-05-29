@@ -33,7 +33,7 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
         using var response = await _httpClient.PostAsJsonAsync("query", request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         return new LoraDbQueryResult(document);
