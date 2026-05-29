@@ -11,6 +11,23 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\LoraDb.Client.Native\LoraDbNativeLoader.cs" Link="Native\LoraDbNativeLoader.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LoraDb.Client.Native\runtimes\win-x64\native\lora_ffi.dll"
+          Pack="true" PackagePath="runtimes/win-x64/native/" />
+    <None Include="..\LoraDb.Client.Native\runtimes\linux-x64\native\liblora_ffi.so"
+          Pack="true" PackagePath="runtimes/linux-x64/native/" />
+    <None Include="..\LoraDb.Client.Native\runtimes\linux-arm64\native\liblora_ffi.so"
+          Pack="true" PackagePath="runtimes/linux-arm64/native/" />
+    <None Include="..\LoraDb.Client.Native\runtimes\osx-x64\native\liblora_ffi.dylib"
+          Pack="true" PackagePath="runtimes/osx-x64/native/" />
+    <None Include="..\LoraDb.Client.Native\runtimes\osx-arm64\native\liblora_ffi.dylib"
+          Pack="true" PackagePath="runtimes/osx-arm64/native/" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />

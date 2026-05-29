@@ -27,6 +27,8 @@ By default this expects a native library named `lora_ffi` with the exported symb
 - `lora_execute_json`
 - `lora_string_free`
 
+The `LoraDb.Client` NuGet package ships RID-specific native assets under `runtimes/{rid}/native/` for common desktop/server platforms.
+
 ```csharp
 await using var client = LoraDbClient.CreateEmbedded();
 using var result = await client.ExecuteAsync("MATCH (u:User) RETURN u");

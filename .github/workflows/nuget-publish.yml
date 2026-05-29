@@ -44,12 +44,6 @@ jobs:
             --no-restore \
             -p:Version=${{ steps.version.outputs.version }} \
             -p:PackageReleaseNotes="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
-          dotnet pack LoraDb.Client.Native/LoraDb.Client.Native.csproj \
-            -c Release \
-            -o ./artifacts \
-            --no-restore \
-            -p:Version=${{ steps.version.outputs.version }} \
-            -p:PackageReleaseNotes="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
       - name: Push
         if: ${{ secrets.NUGET_API_KEY != '' }}
         run: dotnet nuget push ./artifacts/*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
