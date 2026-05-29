@@ -42,9 +42,9 @@ dotnet build LoraDb.Client.slnx
 dotnet test LoraDb.Client.slnx
 ```
 
-### Optional integration tests
+### Integration tests
 
-Integration tests are opt-in and exercise real HTTP and Embedded modes:
+Integration tests exercise real HTTP and Embedded modes:
 
 - `LORADB_RUN_INTEGRATION_TESTS=1`
 - `LORADB_HTTP_IMAGE=<loradb-server-image>`

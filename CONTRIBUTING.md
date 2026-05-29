@@ -9,13 +9,12 @@ Thank you for considering contributing! Please follow these guidelines.
 3. Run `dotnet restore LoraDb.Client.slnx` to restore packages.
 4. Run `dotnet build LoraDb.Client.slnx` to verify the build.
 5. Run `dotnet test LoraDb.Client.slnx` to run the test suite.
-   > **Note:** With the .NET 10+ SDK you may need to use `dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj` instead if `dotnet test` reports a VSTest compatibility error.
 
 ## Integration tests
 
-Integration tests are gated and only run when explicitly enabled.
+Integration tests exercise real HTTP and Embedded modes.
 
-- Set `LORADB_RUN_INTEGRATION_TESTS=1` to enable them.
+- Set `LORADB_RUN_INTEGRATION_TESTS=1`.
 - Set `LORADB_HTTP_IMAGE` to a LoraDB server container image for HTTP mode testing.
 - Set `LORADB_FFI_LIBRARY_PATH` to a real `lora_ffi` binary path for Embedded mode testing.
 
@@ -25,11 +24,9 @@ Run them with:
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
 ```
 
-To run integration tests in GitHub Actions, set these repository variables:
+To run HTTP integration tests in GitHub Actions, set this repository variable:
 
-- `RUN_LORADB_INTEGRATION=true`
 - `LORADB_HTTP_IMAGE=<loradb-server-image>`
-- `LORADB_FFI_LIBRARY_PATH=<absolute-path-on-runner-to-lora_ffi-binary>`
 
 ## Commit conventions
 
