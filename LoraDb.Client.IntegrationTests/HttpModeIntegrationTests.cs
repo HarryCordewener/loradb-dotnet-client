@@ -18,7 +18,7 @@ public class HttpModeIntegrationTests
         await using var container = new ContainerBuilder()
             .WithImage(image)
             .WithPortBinding(4747, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(4747))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(4747))
             .Build();
 
         await container.StartAsync();
