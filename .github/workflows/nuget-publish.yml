@@ -24,7 +24,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
       - name: Restore
-        run: dotnet restore LoraDb.Client/LoraDb.Client.csproj
+        run: dotnet restore LoraDb.Client.slnx
       - name: Build tests
         run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
       - name: Run tests
@@ -37,13 +37,19 @@ jobs:
         env:
           OUTPUT: RELEASE_NOTES.md
       - name: Pack
-        run: >
-          dotnet pack LoraDb.Client/LoraDb.Client.csproj
-          -c Release
-          -o ./artifacts
-          --no-restore
-          -p:Version=${{ steps.version.outputs.version }}
-          -p:PackageReleaseNotes="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
+        run: |
+          dotnet pack LoraDb.Client/LoraDb.Client.csproj \
+            -c Release \
+            -o ./artifacts \
+            --no-restore \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:PackageReleaseNotes="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
+          dotnet pack LoraDb.Client.Native/LoraDb.Client.Native.csproj \
+            -c Release \
+            -o ./artifacts \
+            --no-restore \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:PackageReleaseNotes="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
       - name: Push
         if: ${{ secrets.NUGET_API_KEY != '' }}
         run: dotnet nuget push ./artifacts/*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

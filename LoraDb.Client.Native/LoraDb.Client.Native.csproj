@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>LoraDb.Client.Native</PackageId>
+    <Description>RID-specific native lora_ffi binaries and the custom resolver for LoraDB's embedded transport. Install alongside LoraDb.Client to enable the embedded (in-process) mode without manually placing native libraries.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LoraDb.Client\LoraDb.Client.csproj" />
+  </ItemGroup>
+
+  <!--
+    Native binary placeholders — replace with real Rust FFI builds before publishing.
+    Files must be present for NuGet to include the runtimes/ folder in the package.
+    The build-native CI workflow is expected to populate these before packing.
+  -->
+  <ItemGroup>
+    <None Include="runtimes/win-x64/native/lora_ffi.dll"
+          Pack="true" PackagePath="runtimes/win-x64/native/" />
+    <None Include="runtimes/linux-x64/native/liblora_ffi.so"
+          Pack="true" PackagePath="runtimes/linux-x64/native/" />
+    <None Include="runtimes/linux-arm64/native/liblora_ffi.so"
+          Pack="true" PackagePath="runtimes/linux-arm64/native/" />
+    <None Include="runtimes/osx-x64/native/liblora_ffi.dylib"
+          Pack="true" PackagePath="runtimes/osx-x64/native/" />
+    <None Include="runtimes/osx-arm64/native/liblora_ffi.dylib"
+          Pack="true" PackagePath="runtimes/osx-arm64/native/" />
+  </ItemGroup>
+
+</Project>

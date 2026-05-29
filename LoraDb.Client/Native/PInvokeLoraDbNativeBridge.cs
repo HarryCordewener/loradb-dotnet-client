@@ -4,13 +4,23 @@ namespace LoraDb.Client.Native;
 
 public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
 {
+    /// <summary>
+    /// Optional resolver invoked before <see cref="NativeLibrary.Load(string)"/>.
+    /// Set by <c>LoraDb.Client.Native</c>'s module initializer to locate
+    /// RID-specific binaries shipped inside that NuGet package.
+    /// Returns the full path to load, or <see langword="null"/> to fall back
+    /// to the OS default search.
+    /// </summary>
+    public static Func<string, string?>? LibraryPathResolver { get; set; }
+
     private nint _libraryHandle;
     private readonly ExecuteJsonDelegate _executeJson;
     private readonly FreeStringDelegate _freeString;
 
     public PInvokeLoraDbNativeBridge(string libraryName = "lora_ffi")
     {
-        _libraryHandle = NativeLibrary.Load(libraryName);
+        var resolvedPath = LibraryPathResolver?.Invoke(libraryName) ?? libraryName;
+        _libraryHandle = NativeLibrary.Load(resolvedPath);
 
         _executeJson = Marshal.GetDelegateForFunctionPointer<ExecuteJsonDelegate>(
             NativeLibrary.GetExport(_libraryHandle, "lora_execute_json"));
