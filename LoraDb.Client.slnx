@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj" />
+  <Project Path="LoraDb.Client.Tests/LoraDb.Client.Tests.csproj" />
+  <Project Path="LoraDb.Client/LoraDb.Client.csproj" />
+  <Project Path="LoraDb.Client.Native/LoraDb.Client.Native.csproj" />
+</Solution>

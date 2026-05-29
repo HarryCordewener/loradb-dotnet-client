@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore LoraDb.Client.slnx
+      - name: Build
+        run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
+      - name: Test
+        run: dotnet test LoraDb.Client.slnx --configuration Release --no-build -- --coverage --coverage-output-format cobertura
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          files: "**/*.cobertura.xml"
+          fail_ci_if_error: false
+
+  integration:
+    name: integration (http + ffi)
+    runs-on: ubuntu-latest
+    env:
+      LORADB_RUN_INTEGRATION_TESTS: "1"
+      LORADB_HTTP_IMAGE: ${{ vars.LORADB_HTTP_IMAGE }}
+      LORADB_FFI_LIBRARY_PATH: ${{ github.workspace }}/LoraDb.Client.Native/runtimes/linux-x64/native/liblora_ffi.so
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore LoraDb.Client.slnx
+      - name: Build
+        run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
+      - name: Run integration tests
+        run: dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj --configuration Release --no-build
