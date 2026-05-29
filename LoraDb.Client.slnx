@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LoraDb.Client.Tests/LoraDb.Client.Tests.csproj" />
+  <Project Path="LoraDb.Client/LoraDb.Client.csproj" />
+</Solution>
