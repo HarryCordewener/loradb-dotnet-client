@@ -8,7 +8,8 @@ Thank you for considering contributing! Please follow these guidelines.
 2. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or later.
 3. Run `dotnet restore LoraDb.Client.slnx` to restore packages.
 4. Run `dotnet build LoraDb.Client.slnx` to verify the build.
-5. Run `dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj` to run the test suite.
+5. Run `dotnet test LoraDb.Client.slnx` to run the test suite.
+   > **Note:** With the .NET 10+ SDK you may need to use `dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj` instead if `dotnet test` reports a VSTest compatibility error.
 
 ## Commit conventions
 

@@ -26,7 +26,7 @@ jobs:
       - name: Build
         run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
       - name: Test
-        run: dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj --configuration Release --no-build -- --coverage --coverage-output-format cobertura
+        run: dotnet test LoraDb.Client.slnx --configuration Release --no-build -- --coverage --coverage-output-format cobertura
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v4

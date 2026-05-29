@@ -7,6 +7,10 @@ namespace LoraDb.Client.Transports;
 
 public sealed class HttpLoraDbTransport : ILoraDbTransport
 {
+    // Use relaxed JSON escaping so Cypher syntax characters like `>` (e.g. `->`)
+    // are serialized as-is rather than as \u003e. This JSON is only sent over a
+    // trusted internal/local socket to the LoraDB server and is never rendered in
+    // an HTML context, so XSS concerns do not apply.
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping

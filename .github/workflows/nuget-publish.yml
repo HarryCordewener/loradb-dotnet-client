@@ -28,7 +28,7 @@ jobs:
       - name: Build tests
         run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
       - name: Run tests
-        run: dotnet run --project LoraDb.Client.Tests/LoraDb.Client.Tests.csproj --configuration Release --no-build
+        run: dotnet test LoraDb.Client.slnx --configuration Release --no-restore --no-build
       - name: Generate changelog fragment
         uses: orhun/git-cliff-action@v3
         with:
