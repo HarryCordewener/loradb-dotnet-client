@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
@@ -41,7 +41,7 @@ jobs:
       LORADB_RUN_INTEGRATION_TESTS: "1"
       LORADB_FFI_LIBRARY_PATH: ${{ github.workspace }}/LoraDb.Client.Native/runtimes/linux-x64/native/liblora_ffi.so
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
