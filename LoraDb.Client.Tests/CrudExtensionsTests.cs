@@ -412,11 +412,10 @@ public class CrudExtensionsTests
         var bridge = NodeBridge(5, "User", """{"email":"x@x.com"}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        var rows = await client.MergeNodeAsync<NodeRow>("User",
+        var row = await client.MergeNodeAsync<NodeRow>("User",
             new Dictionary<string, object?> { ["email"] = "x@x.com" });
 
-        await Assert.That(rows.Count).IsEqualTo(1);
-        await Assert.That(rows[0].N.Id).IsEqualTo(5);
+        await Assert.That(row.N.Id).IsEqualTo(5);
     }
 
     // ── CreateBatch ────────────────────────────────────────────────────────────

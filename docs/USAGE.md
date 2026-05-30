@@ -226,7 +226,7 @@ await client.DeleteNodesAsync("Isolated", detach: false);
 
 ```csharp
 // MERGE (n:User {email: $merge_email}) RETURN n
-var rows = await client.MergeNodeAsync<PersonNode>("User",
+var row = await client.MergeNodeAsync<PersonNode>("User",
     new Dictionary<string, object?> { ["email"] = "alice@example.com" });
 ```
 

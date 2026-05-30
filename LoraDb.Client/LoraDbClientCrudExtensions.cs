@@ -36,7 +36,10 @@ public static class LoraDbClientCrudExtensions
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="client"/> or <paramref name="properties"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException"><paramref name="label"/> is null/whitespace, or <paramref name="properties"/> is empty.</exception>
-    /// <exception cref="InvalidOperationException">The query returned no rows.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The database returned no rows. This indicates an unexpected database state because a
+    /// <c>CREATE … RETURN n</c> query always returns the created node on success.
+    /// </exception>
     public static async Task<T> CreateNodeAsync<T>(
         this ILoraDbClient client,
         string label,
@@ -239,16 +242,20 @@ public static class LoraDbClientCrudExtensions
     // ── Merge (upsert) ─────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Merges (upserts) a node with the given <paramref name="label"/> using the
-    /// <paramref name="mergeProperties"/> as the identity key. Returns the node rows
-    /// (created or matched) deserialized as <typeparamref name="T"/>.
+    /// Merges (upserts) a node with the given <paramref name="label"/> and identity
+    /// <paramref name="mergeProperties"/>, returning the merged node deserialized as
+    /// <typeparamref name="T"/>.
     /// </summary>
     /// <remarks>
     /// Generated Cypher (example):
     /// <code>MERGE (n:User {email: $merge_email}) RETURN n</code>
     /// </remarks>
     /// <exception cref="ArgumentException"><paramref name="mergeProperties"/> is empty.</exception>
-    public static async Task<IReadOnlyList<T>> MergeNodeAsync<T>(
+    /// <exception cref="InvalidOperationException">
+    /// The database returned no rows. This indicates an unexpected database state because a
+    /// <c>MERGE … RETURN n</c> query always returns the node on success.
+    /// </exception>
+    public static async Task<T> MergeNodeAsync<T>(
         this ILoraDbClient client,
         string label,
         IReadOnlyDictionary<string, object?> mergeProperties,
@@ -263,7 +270,10 @@ public static class LoraDbClientCrudExtensions
         var query = $"MERGE (n:{label} {propMap}) RETURN n";
 
         using var result = await client.ExecuteAsync(query, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return result.ReadRows<T>();
+        var rows = result.ReadRows<T>();
+        if (rows.Count == 0)
+            throw new InvalidOperationException("MERGE did not return any rows.");
+        return rows[0];
     }
 
     // ── Batch ──────────────────────────────────────────────────────────────────

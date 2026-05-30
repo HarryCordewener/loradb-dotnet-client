@@ -217,11 +217,10 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
         {
             var email = $"crud-merge-{Guid.NewGuid():N}@example.com";
 
-            var rows = await client.MergeNodeAsync<NodeRow>("MergeUser",
+            var row = await client.MergeNodeAsync<NodeRow>("MergeUser",
                 new Dictionary<string, object?> { ["email"] = email });
 
-            await Assert.That(rows.Count).IsEqualTo(1);
-            await Assert.That(rows[0].N.Properties.GetProperty("email").GetString()).IsEqualTo(email);
+            await Assert.That(row.N.Properties.GetProperty("email").GetString()).IsEqualTo(email);
         });
     }
 
@@ -240,7 +239,7 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
             using var _ = await client.ExecuteAsync($"CREATE (:MergeDedup {{email: '{email}'}})");
 
             // Merge should match the existing node, not create a second one
-            await client.MergeNodeAsync<NodeRow>("MergeDedup",
+            var merged = await client.MergeNodeAsync<NodeRow>("MergeDedup",
                 new Dictionary<string, object?> { ["email"] = email });
 
             using var countResult = await client.ExecuteAsync(
