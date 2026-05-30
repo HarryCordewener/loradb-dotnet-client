@@ -20,3 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LoraDbClientOptions` with `FromConnectionString` parser.
 - Full TUnit 1.x test suite covering Cypher CREATE, MATCH, UPDATE/DELETE, error
   handling, result formats, and DI registration.
+- `LoraDbClientCrudExtensions` — structured CRUD helpers (`CreateNodeAsync`,
+  `FindNodesAsync`, `FindNodeAsync`, `UpdateNodesAsync`, `DeleteNodesAsync`,
+  `MergeNodeAsync`) that build Cypher queries automatically from label and
+  property-map inputs.
+- `LoraDbBatch` / `LoraDbBatchResult` — sequential fail-fast batch executor that
+  runs multiple statements one-after-another using LoraDB's auto-commit
+  semantics; accessible via `ILoraDbClient.CreateBatch()`.

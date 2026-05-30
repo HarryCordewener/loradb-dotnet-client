@@ -151,7 +151,112 @@ Required exported symbols in native library:
 
 ---
 
-## 7) Testing with real LoraDB
+## 7) CRUD helper extensions
+
+`LoraDbClientCrudExtensions` provides structured helpers that build common Cypher
+queries automatically.  All methods accept a `label` string and a property
+dictionary, and return rows deserialized as `T`.
+
+> **Row shape note** – LoraDB wraps node data as
+> `{"n":{"id":…,"labels":[…],"properties":{…}}}`.  Define your DTO with a
+> property `n` (or use `[JsonPropertyName("n")]`) to map the node.
+
+```csharp
+public sealed class PersonNode
+{
+    [JsonPropertyName("n")]
+    public NodeData N { get; init; } = null!;
+}
+public sealed class NodeData
+{
+    [JsonPropertyName("id")] public int Id { get; init; }
+    [JsonPropertyName("labels")] public List<string> Labels { get; init; } = new();
+    [JsonPropertyName("properties")] public JsonElement Properties { get; init; }
+}
+```
+
+### Create
+
+```csharp
+// CREATE (n:Person {name: $create_name, age: $create_age}) RETURN n
+var row = await client.CreateNodeAsync<PersonNode>("Person",
+    new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 });
+
+// CREATE (n:Tag) RETURN n  (no inline properties)
+var empty = await client.CreateNodeAsync<PersonNode>("Tag");
+```
+
+### Read
+
+```csharp
+// MATCH (n:Person {name: $filter_name}) RETURN n
+var all = await client.FindNodesAsync<PersonNode>("Person",
+    new Dictionary<string, object?> { ["name"] = "Alice" });
+
+// MATCH (n:Person {id: $filter_id}) RETURN n LIMIT 1
+var one = await client.FindNodeAsync<PersonNode>("Person",
+    new Dictionary<string, object?> { ["id"] = 42 });
+// Returns null when no match exists.
+```
+
+### Update
+
+```csharp
+// MATCH (n:Person {id: $match_id}) SET n.age = $set_age RETURN n
+var updated = await client.UpdateNodesAsync<PersonNode>("Person",
+    match: new Dictionary<string, object?> { ["id"] = 42 },
+    properties: new Dictionary<string, object?> { ["age"] = 31 });
+```
+
+### Delete
+
+```csharp
+// MATCH (n:Person {id: $match_id}) DETACH DELETE n
+await client.DeleteNodesAsync("Person",
+    match: new Dictionary<string, object?> { ["id"] = 42 });
+
+// MATCH (n:TempNode) DETACH DELETE n  (no filter = all nodes with label)
+await client.DeleteNodesAsync("TempNode");
+
+// Plain DELETE (no DETACH) — node must have no relationships
+await client.DeleteNodesAsync("Isolated", detach: false);
+```
+
+### Merge (upsert)
+
+```csharp
+// MERGE (n:User {email: $merge_email}) RETURN n
+var rows = await client.MergeNodeAsync<PersonNode>("User",
+    new Dictionary<string, object?> { ["email"] = "alice@example.com" });
+```
+
+---
+
+## 8) Batch execution
+
+`LoraDbBatch` executes multiple Cypher statements sequentially against the same
+client.  LoraDB uses auto-commit semantics, so each statement is its own
+transaction.  The batch provides **fail-fast** behaviour: if one statement
+throws, the remaining statements are not executed.
+
+```csharp
+using var batchResult = await client.CreateBatch()
+    .Add("CREATE (:Person {name: $name})", new Dictionary<string, object?> { ["name"] = "Alice" })
+    .Add("CREATE (:Person {name: $name})", new Dictionary<string, object?> { ["name"] = "Bob" })
+    .Add("MATCH (n:Person) RETURN count(n) AS total")
+    .ExecuteAsync();
+
+// batchResult.Results[2] holds the count query result
+var total = batchResult.Results[2].Root.GetProperty("rows")[0].GetProperty("total").GetInt32();
+```
+
+- `LoraDbBatchResult` is `IDisposable` and disposes all contained
+  `LoraDbQueryResult` instances when you dispose it.
+- Use `using var` or call `Dispose()` explicitly.
+
+---
+
+## 9) Testing with real LoraDB
 
 To run integration tests in this repository:
 
