@@ -30,7 +30,7 @@ var rows = await client.ExecuteRowsAsync<UserNameRow>(
     "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
     new Dictionary<string, object?> { ["name"] = "Alice" });
 
-var firstName = rows[0].Name;
+var name = rows[0].Name;
 
 public sealed class UserNameRow
 {
