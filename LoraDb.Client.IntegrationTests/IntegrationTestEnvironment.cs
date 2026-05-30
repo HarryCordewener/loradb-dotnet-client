@@ -13,10 +13,7 @@ internal static class IntegrationTestEnvironment
                || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
 
-    private const string DefaultHttpImage = "ghcr.io/lora-db/lora-server:latest";
-
-    public static string HttpImage =>
-        Environment.GetEnvironmentVariable(HttpImageName) ?? DefaultHttpImage;
+    public static string? HttpImage => Environment.GetEnvironmentVariable(HttpImageName);
 
     public static string? FfiLibraryPath => Environment.GetEnvironmentVariable(FfiLibraryPathName);
 }

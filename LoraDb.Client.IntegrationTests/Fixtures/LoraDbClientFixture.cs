@@ -1,5 +1,6 @@
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Images;
 using LoraDb.Client.Native;
 using TUnit.Core;
 using TUnit.Core.Interfaces;
@@ -44,6 +45,7 @@ public sealed class EmbeddedClientFixture : ILoraDbClientFixture
 
 public sealed class HttpClientFixture : ILoraDbClientFixture
 {
+    private IFutureDockerImage? _builtImage;
     private IContainer? _container;
     private Uri? _endpoint;
 
@@ -52,9 +54,26 @@ public sealed class HttpClientFixture : ILoraDbClientFixture
         if (!IntegrationTestEnvironment.IsEnabled())
             return;
 
-        var image = IntegrationTestEnvironment.HttpImage;
+        var imageName = IntegrationTestEnvironment.HttpImage;
 
-        _container = new ContainerBuilder(image)
+        ContainerBuilder containerBuilder;
+        if (imageName is not null)
+        {
+            containerBuilder = new ContainerBuilder(imageName);
+        }
+        else
+        {
+            var futureImage = new ImageFromDockerfileBuilder()
+                .WithName("loradb-server-integration")
+                .WithDockerfileDirectory(CommonDirectoryPath.GetSolutionDirectory(), Path.Combine("docker", "lora-server"))
+                .WithDockerfile("Dockerfile")
+                .Build();
+            await futureImage.CreateAsync();
+            _builtImage = futureImage;
+            containerBuilder = new ContainerBuilder(futureImage);
+        }
+
+        _container = containerBuilder
             .WithPortBinding(4747, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(4747))
             .Build();
@@ -77,5 +96,7 @@ public sealed class HttpClientFixture : ILoraDbClientFixture
     {
         if (_container is not null)
             await _container.DisposeAsync();
+        if (_builtImage is not null)
+            await _builtImage.DisposeAsync();
     }
 }
