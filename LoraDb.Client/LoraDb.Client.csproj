@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net10.0;netstandard2.1</TargetFrameworks>
     <PackageId>LoraDb.Client</PackageId>
     <Description>.NET client for LoraDB with HTTP and embedded Rust FFI transports.</Description>
   </PropertyGroup>
@@ -11,7 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\LoraDb.Client.Native\LoraDbNativeLoader.cs" Link="Native\LoraDbNativeLoader.cs" />
+    <Compile Include="..\LoraDb.Client.Native\LoraDbNativeLoader.cs" Link="Native\LoraDbNativeLoader.cs"
+             Condition="'$(TargetFramework)' == 'net10.0'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,9 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.8" />
+    <PackageReference Include="System.Net.Http.Json" Version="10.0.0" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
+    <PackageReference Include="System.Text.Json" Version="10.0.0" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
   </ItemGroup>
 
 </Project>

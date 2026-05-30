@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <PackageId>LoraDb.Client.Native</PackageId>
     <Description>RID-specific native lora_ffi binaries and the custom resolver for LoraDB's embedded transport. Install alongside LoraDb.Client to enable the embedded (in-process) mode without manually placing native libraries.</Description>
   </PropertyGroup>

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of `LoraDb.Client` — a dual-mode .NET 8 client library for
   [LoraDB](https://github.com/lora-db/lora), supporting both HTTP transport and
   embedded Rust FFI (P/Invoke) modes.
+- Updated target framework support to .NET 10 and added a .NET Standard 2.1 target for `LoraDb.Client`.
 - `LoraDbClient.CreateHttp` and `LoraDbClient.CreateEmbedded` factory methods.
 - `ILoraDbClient` interface for dependency-injection scenarios.
 - `ServiceCollectionExtensions.AddLoraDb` with action, connection-string, and

@@ -5,6 +5,18 @@ namespace LoraDb.Client.Native;
 
 public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
 {
+#if NETSTANDARD2_1
+    public PInvokeLoraDbNativeBridge(string libraryName = "lora_ffi")
+    {
+        throw new PlatformNotSupportedException("Embedded mode is not supported on netstandard2.1.");
+    }
+
+    public string ExecuteJson(string requestJson) => throw new PlatformNotSupportedException("Embedded mode is not supported on netstandard2.1.");
+
+    public void Dispose()
+    {
+    }
+#else
     /// <summary>
     /// Optional resolver invoked before <see cref="NativeLibrary.Load(string)"/>.
     /// Set by <c>LoraDb.Client.Native</c>'s module initializer to locate
@@ -14,8 +26,8 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
     /// </summary>
     public static Func<string, string?>? LibraryPathResolver { get; set; }
 
-    private nint _libraryHandle;
-    private nint _dbHandle;
+    private IntPtr _libraryHandle;
+    private IntPtr _dbHandle;
     private readonly DbNewDelegate _dbNew;
     private readonly DbFreeDelegate _dbFree;
     private readonly DbExecuteJsonDelegate _dbExecuteJson;
@@ -39,13 +51,14 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
             NativeLibrary.GetExport(_libraryHandle, "lora_string_free"));
 
         var status = _dbNew(out _dbHandle);
-        if (status != 0 || _dbHandle == nint.Zero)
+        if (status != 0 || _dbHandle == IntPtr.Zero)
             throw new InvalidOperationException($"lora_db_new failed with status {status}.");
     }
 
     public string ExecuteJson(string requestJson)
     {
-        ArgumentNullException.ThrowIfNull(requestJson);
+        if (requestJson is null)
+            throw new ArgumentNullException(nameof(requestJson));
 
         using var doc = JsonDocument.Parse(requestJson);
         var root = doc.RootElement;
@@ -58,10 +71,10 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
         if (root.TryGetProperty("params", out var paramsProp) && paramsProp.ValueKind == JsonValueKind.Object)
             paramsJson = paramsProp.GetRawText();
 
-        nint resultPtr = nint.Zero;
-        nint errorPtr = nint.Zero;
-        var queryPtr = nint.Zero;
-        var paramsPtr = nint.Zero;
+        IntPtr resultPtr = IntPtr.Zero;
+        IntPtr errorPtr = IntPtr.Zero;
+        IntPtr queryPtr = IntPtr.Zero;
+        IntPtr paramsPtr = IntPtr.Zero;
 
         try
         {
@@ -78,13 +91,13 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
 
             if (status != 0)
             {
-                var errorMessage = errorPtr != nint.Zero
+                var errorMessage = errorPtr != IntPtr.Zero
                     ? Marshal.PtrToStringUTF8(errorPtr) ?? "Unknown error"
                     : $"lora_db_execute_json failed with status {status}";
                 throw new InvalidOperationException(errorMessage);
             }
 
-            if (resultPtr == nint.Zero)
+            if (resultPtr == IntPtr.Zero)
                 throw new InvalidOperationException("lora_db_execute_json returned a null result pointer.");
 
             return Marshal.PtrToStringUTF8(resultPtr)
@@ -92,46 +105,47 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
         }
         finally
         {
-            if (queryPtr != nint.Zero)
+            if (queryPtr != IntPtr.Zero)
                 Marshal.FreeCoTaskMem(queryPtr);
-            if (paramsPtr != nint.Zero)
+            if (paramsPtr != IntPtr.Zero)
                 Marshal.FreeCoTaskMem(paramsPtr);
-            if (resultPtr != nint.Zero)
+            if (resultPtr != IntPtr.Zero)
                 _freeString(resultPtr);
-            if (errorPtr != nint.Zero)
+            if (errorPtr != IntPtr.Zero)
                 _freeString(errorPtr);
         }
     }
 
     public void Dispose()
     {
-        if (_dbHandle != nint.Zero)
+        if (_dbHandle != IntPtr.Zero)
         {
             _dbFree(_dbHandle);
-            _dbHandle = nint.Zero;
+            _dbHandle = IntPtr.Zero;
         }
 
-        if (_libraryHandle != nint.Zero)
+        if (_libraryHandle != IntPtr.Zero)
         {
             NativeLibrary.Free(_libraryHandle);
-            _libraryHandle = nint.Zero;
+            _libraryHandle = IntPtr.Zero;
         }
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate int DbNewDelegate(out nint outDb);
+    private delegate int DbNewDelegate(out IntPtr outDb);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void DbFreeDelegate(nint db);
+    private delegate void DbFreeDelegate(IntPtr db);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate int DbExecuteJsonDelegate(
-        nint db,
-        nint query,
-        nint paramsJson,
-        out nint outResult,
-        out nint outError);
+        IntPtr db,
+        IntPtr query,
+        IntPtr paramsJson,
+        out IntPtr outResult,
+        out IntPtr outError);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate void FreeStringDelegate(nint utf8StringPtr);
+    private delegate void FreeStringDelegate(IntPtr utf8StringPtr);
+#endif
 }

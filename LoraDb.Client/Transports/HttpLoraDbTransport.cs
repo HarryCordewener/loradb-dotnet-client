@@ -21,7 +21,8 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
 
     public HttpLoraDbTransport(Uri endpoint, HttpClient? httpClient = null)
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
+        if (endpoint is null)
+            throw new ArgumentNullException(nameof(endpoint));
 
         _ownsHttpClient = httpClient is null;
         _httpClient = httpClient ?? new HttpClient();
@@ -39,8 +40,10 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
     /// </summary>
     public HttpLoraDbTransport(Uri endpoint, IHttpClientFactory httpClientFactory, string clientName = nameof(HttpLoraDbTransport))
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
-        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        if (endpoint is null)
+            throw new ArgumentNullException(nameof(endpoint));
+        if (httpClientFactory is null)
+            throw new ArgumentNullException(nameof(httpClientFactory));
 
         _ownsHttpClient = false; // lifetime is managed by the factory
         _httpClient = httpClientFactory.CreateClient(clientName);
@@ -53,9 +56,8 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
 
     public async Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters, string format, CancellationToken cancellationToken)
     {
-        var request = new LoraDbQueryRequest
+        var request = new LoraDbQueryRequest(query)
         {
-            Query = query,
             Parameters = parameters,
             Format = format,
         };
@@ -63,7 +65,7 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
         using var response = await _httpClient.PostAsJsonAsync("query", request, SerializerOptions, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         return new LoraDbQueryResult(document);
@@ -76,6 +78,6 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
             _httpClient.Dispose();
         }
 
-        return ValueTask.CompletedTask;
+        return default;
     }
 }

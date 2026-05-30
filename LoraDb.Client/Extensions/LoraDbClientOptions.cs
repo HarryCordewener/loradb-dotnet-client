@@ -16,12 +16,14 @@ public sealed class LoraDbClientOptions
 
     public static LoraDbClientOptions FromConnectionString(string connectionString)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(connectionString));
 
         var options = new LoraDbClientOptions();
 
-        foreach (var segment in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (var segmentRaw in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries))
         {
+            var segment = segmentRaw.Trim();
             var eq = segment.IndexOf('=', StringComparison.Ordinal);
             if (eq <= 0)
             {
