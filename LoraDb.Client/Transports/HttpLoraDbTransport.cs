@@ -32,6 +32,25 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
         }
     }
 
+    /// <summary>
+    /// Initialises the transport using an <see cref="IHttpClientFactory"/>.
+    /// The factory manages the <see cref="HttpClient"/> lifetime; this transport
+    /// will never dispose the client it receives.
+    /// </summary>
+    public HttpLoraDbTransport(Uri endpoint, IHttpClientFactory httpClientFactory, string clientName = nameof(HttpLoraDbTransport))
+    {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+
+        _ownsHttpClient = false; // lifetime is managed by the factory
+        _httpClient = httpClientFactory.CreateClient(clientName);
+
+        if (_httpClient.BaseAddress is null)
+        {
+            _httpClient.BaseAddress = endpoint;
+        }
+    }
+
     public async Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters, string format, CancellationToken cancellationToken)
     {
         var request = new LoraDbQueryRequest

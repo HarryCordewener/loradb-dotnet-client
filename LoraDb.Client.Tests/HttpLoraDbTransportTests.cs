@@ -179,5 +179,86 @@ public class HttpLoraDbTransportTests
             .And
             .IsTypeOf<ArgumentNullException>();
     }
+
+    // ── IHttpClientFactory overload ──────────────────────────────────
+
+    [Test]
+    public async Task CreateHttp_WithFactory_ExecutesQuery()
+    {
+        var handler = RecordingHttpHandler.WithJson("""{"rows":[{"name":"Alice"}]}""");
+        var factory = new FakeHttpClientFactory(handler.BuildClient(Endpoint));
+        await using var client = LoraDbClient.CreateHttp(Endpoint, factory);
+
+        using var result = await client.ExecuteAsync("MATCH (u:User) RETURN u.name AS name");
+
+        await Assert.That(handler.CallCount).IsEqualTo(1);
+        await Assert.That(result.Root.GetProperty("rows")[0].GetProperty("name").GetString())
+            .IsEqualTo("Alice");
+    }
+
+    [Test]
+    public async Task CreateHttp_WithFactory_UsesNamedClient()
+    {
+        var handler = RecordingHttpHandler.WithJson("""{"rows":[]}""");
+        string? capturedName = null;
+        var factory = new SpyHttpClientFactory(handler.BuildClient(Endpoint), n => capturedName = n);
+        await using var client = LoraDbClient.CreateHttp(Endpoint, factory, "my-client");
+
+        using var _ = await client.ExecuteAsync("MATCH (n) RETURN n");
+
+        await Assert.That(capturedName).IsEqualTo("my-client");
+    }
+
+    [Test]
+    public async Task CreateHttp_WithFactory_DoesNotDisposeClient()
+    {
+        var handler = RecordingHttpHandler.WithJson("""{"rows":[]}""");
+        var httpClient = handler.BuildClient(Endpoint);
+        var factory = new FakeHttpClientFactory(httpClient);
+        var transport = LoraDbClient.CreateHttp(Endpoint, factory);
+
+        await transport.DisposeAsync();
+
+        // The HttpClient should still be usable after the transport is disposed;
+        // the factory owns the client lifetime, not the transport.
+        // If the transport incorrectly disposed the client this would throw ObjectDisposedException.
+        var response = await httpClient.GetAsync("/");
+        await Assert.That((int)response.StatusCode).IsEqualTo(200);
+    }
+
+    [Test]
+    public async Task CreateHttp_WithNullFactory_ThrowsArgumentNullException()
+    {
+        await Assert.That(() => Task.FromResult(LoraDbClient.CreateHttp(Endpoint, (IHttpClientFactory)null!)))
+            .ThrowsException()
+            .And
+            .IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task CreateHttp_WithFactoryAndNullEndpoint_ThrowsArgumentNullException()
+    {
+        var factory = new FakeHttpClientFactory(new HttpClient());
+        await Assert.That(() => Task.FromResult(LoraDbClient.CreateHttp(null!, factory)))
+            .ThrowsException()
+            .And
+            .IsTypeOf<ArgumentNullException>();
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────
+
+    private sealed class FakeHttpClientFactory(HttpClient client) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => client;
+    }
+
+    private sealed class SpyHttpClientFactory(HttpClient client, Action<string> onCreateClient) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+        {
+            onCreateClient(name);
+            return client;
+        }
+    }
 }
 
