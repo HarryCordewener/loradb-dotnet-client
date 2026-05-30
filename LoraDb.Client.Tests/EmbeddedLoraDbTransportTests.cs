@@ -54,12 +54,12 @@ public class EmbeddedLoraDbTransportTests
         var bridge = new FakeNativeBridge();
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        var ex = await Assert.That(() => client.ExecuteAsync("  "))
+        var ex = await Assert.That(async () => await client.ExecuteAsync("  "))
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentException>();
 
-        await Assert.That(ex.ParamName).IsEqualTo("query");
+        await Assert.That(ex!.ParamName).IsEqualTo("query");
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class EmbeddedLoraDbTransportTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        await Assert.That(() => client.ExecuteAsync("MATCH (n) RETURN n", cancellationToken: cts.Token))
+        await Assert.That(async () => await client.ExecuteAsync("MATCH (n) RETURN n", cancellationToken: cts.Token))
             .ThrowsException()
             .And
             .IsTypeOf<OperationCanceledException>();
@@ -111,4 +111,3 @@ public class EmbeddedLoraDbTransportTests
         public void Dispose() => Disposed = true;
     }
 }
-

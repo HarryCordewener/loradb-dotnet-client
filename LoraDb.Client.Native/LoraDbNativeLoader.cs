@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 using LoraDb.Client.Native;
 
 namespace LoraDb.Client.Native.Loader;
@@ -19,6 +20,7 @@ public static class LoraDbNativeLoader
 {
     private const string NativeLibraryBaseName = "lora_ffi";
 
+    [SuppressMessage("Usage", "CA2255:The 'ModuleInitializer' attribute is only intended to be used in application code or advanced source generator scenarios", Justification = "The resolver must be registered automatically when the assembly loads.")]
     [ModuleInitializer]
     internal static void Initialize()
     {
@@ -44,7 +46,6 @@ public static class LoraDbNativeLoader
         var rid = GetCurrentRid();
         var fileName = GetNativeFileName();
 
-        // 1. Next to this (LoraDb.Client.Native) assembly — typical publish/app output layout.
         var nativeAssemblyDir = Path.GetDirectoryName(typeof(LoraDbNativeLoader).Assembly.Location);
         if (nativeAssemblyDir is not null)
         {
@@ -53,7 +54,6 @@ public static class LoraDbNativeLoader
                 return candidate;
         }
 
-        // 2. AppContext.BaseDirectory — works for single-file and some host configurations.
         var baseCandidate = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", fileName);
         if (File.Exists(baseCandidate))
             return baseCandidate;
@@ -64,11 +64,8 @@ public static class LoraDbNativeLoader
     /// <summary>Returns the simplified RID for the current process.</summary>
     private static string GetCurrentRid()
     {
-        // RuntimeInformation.RuntimeIdentifier returns a simplified form in .NET 8+
-        // (e.g. "win-x64", "linux-x64") without OS version qualifiers.
         var rid = RuntimeInformation.RuntimeIdentifier;
 
-        // Normalise in case the runtime returns a versioned RID (e.g. "win10-x64").
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "win-arm64" : "win-x64";
 
@@ -78,7 +75,6 @@ public static class LoraDbNativeLoader
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "osx-arm64" : "osx-x64";
 
-        // Return whatever the runtime reports for exotic platforms.
         return rid;
     }
 

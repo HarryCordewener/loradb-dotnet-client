@@ -10,11 +10,10 @@
     <ProjectReference Include="..\LoraDb.Client\LoraDb.Client.csproj" />
   </ItemGroup>
 
-  <!--
-    Native binary placeholders — replace with real Rust FFI builds before publishing.
-    Files must be present for NuGet to include the runtimes/ folder in the package.
-    The build-native CI workflow is expected to populate these before packing.
-  -->
+  <ItemGroup>
+    <Compile Remove="LoraDbNativeLoader.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="runtimes/win-x64/native/lora_ffi.dll"
           Pack="true" PackagePath="runtimes/win-x64/native/" />
