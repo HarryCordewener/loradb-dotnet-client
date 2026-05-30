@@ -15,7 +15,8 @@ Thank you for considering contributing! Please follow these guidelines.
 Integration tests exercise real HTTP and Embedded modes.
 
 - Set `LORADB_RUN_INTEGRATION_TESTS=1`.
-- Optionally set `LORADB_HTTP_IMAGE` to override the default LoraDB server container image (`ghcr.io/lora-db/lora-server:latest`) for HTTP mode testing.
+- For HTTP mode, tests automatically build a local Docker image from `docker/lora-server/Dockerfile` using TestContainers' `ImageFromDockerfileBuilder`. You need Docker running locally.
+- Optionally set `LORADB_HTTP_IMAGE` to skip the local build and use a pre-existing image instead (e.g. a registry image or a locally tagged image).
 - Set `LORADB_FFI_LIBRARY_PATH` to a real `lora_ffi` binary path for Embedded mode testing.
 
 Run them with:
@@ -48,7 +49,7 @@ For cross-target output, pass an explicit target and output path:
 ./scripts/build-lora-ffi.sh --target aarch64-unknown-linux-gnu --out LoraDb.Client.Native/runtimes/linux-arm64/native/liblora_ffi.so
 ```
 
-To run HTTP integration tests in GitHub Actions, optionally set this repository variable to override the default (`ghcr.io/lora-db/lora-server:latest`):
+To run HTTP integration tests in GitHub Actions, the local Dockerfile is built automatically. Optionally set this repository variable to use a pre-existing image instead:
 
 - `LORADB_HTTP_IMAGE=<loradb-server-image>`
 
