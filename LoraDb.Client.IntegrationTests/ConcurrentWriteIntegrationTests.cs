@@ -8,7 +8,7 @@ namespace LoraDb.Client.IntegrationTests;
 /// <summary>
 /// Aggressively exercises write-write conflicts by firing many concurrent writes at
 /// overlapping or identical graph data.  These tests verify that LoraDB's write
-/// serialisation keeps the store consistent under pressure.
+/// serialization keeps the store consistent under pressure.
 /// </summary>
 public class ConcurrentWriteIntegrationTests : IntegrationTestBase
 {
@@ -16,7 +16,7 @@ public class ConcurrentWriteIntegrationTests : IntegrationTestBase
 
     /// <summary>
     /// Many clients concurrently MERGE the same node.  Because MERGE is idempotent
-    /// and writes serialise, exactly one node must exist after all writes complete —
+    /// and writes serialize, exactly one node must exist after all writes complete —
     /// no phantom duplicates, no exceptions.
     /// </summary>
     [Test]
@@ -49,7 +49,7 @@ public class ConcurrentWriteIntegrationTests : IntegrationTestBase
     /// <summary>
     /// Many clients each CREATE a node with a distinct key, all fired in parallel.
     /// No write should be silently dropped: the final count must equal the worker
-    /// count, proving write serialisation incurs no data loss.
+    /// count, proving write serialization incurs no data loss.
     /// </summary>
     [Test]
     [CombinedDataSources]
