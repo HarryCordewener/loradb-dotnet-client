@@ -5,7 +5,7 @@ Thank you for considering contributing! Please follow these guidelines.
 ## Getting started
 
 1. Fork the repository and clone your fork.
-2. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or later.
+2. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later.
 3. Run `dotnet restore LoraDb.Client.slnx` to restore packages.
 4. Run `dotnet build LoraDb.Client.slnx` to verify the build.
 5. Run `dotnet test LoraDb.Client.slnx` to run the test suite.
