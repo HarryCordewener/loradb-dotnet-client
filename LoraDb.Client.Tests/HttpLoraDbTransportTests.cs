@@ -73,7 +73,7 @@ public class HttpLoraDbTransportTests
             """{"error":{"code":"LORA_PARSE","message":"invalid syntax"}}""");
         await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
-        await Assert.That(() => client.ExecuteAsync("THIS IS NOT CYPHER"))
+        await Assert.That(async () => await client.ExecuteAsync("THIS IS NOT CYPHER"))
             .ThrowsException()
             .WithMessageContaining("400");
     }
@@ -86,7 +86,7 @@ public class HttpLoraDbTransportTests
             """{"error":{"code":"LORA_CONNECTION","message":"temporarily unavailable"}}""");
         await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
-        await Assert.That(() => client.ExecuteAsync("MATCH (n) RETURN n"))
+        await Assert.That(async () => await client.ExecuteAsync("MATCH (n) RETURN n"))
             .ThrowsException()
             .WithMessageContaining("503");
     }
@@ -151,12 +151,12 @@ public class HttpLoraDbTransportTests
         var handler = RecordingHttpHandler.WithJson("""{"rows":[]}""");
         await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
-        var ex = await Assert.That(() => client.ExecuteAsync("  "))
+        var ex = await Assert.That(async () => await client.ExecuteAsync("  "))
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentException>();
 
-        await Assert.That(ex.ParamName).IsEqualTo("query");
+        await Assert.That(ex!.ParamName).IsEqualTo("query");
     }
 
     [Test]
@@ -165,7 +165,7 @@ public class HttpLoraDbTransportTests
         var handler = RecordingHttpHandler.WithJson("""{"rows":[]}""");
         await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
-        await Assert.That(() => client.ExecuteAsync("\t\n"))
+        await Assert.That(async () => await client.ExecuteAsync("\t\n"))
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentException>();
@@ -174,13 +174,15 @@ public class HttpLoraDbTransportTests
     [Test]
     public async Task CreateHttp_ThrowsForNullEndpoint()
     {
-        await Assert.That(() => Task.FromResult(LoraDbClient.CreateHttp(null!)))
+        await Assert.That(() =>
+        {
+            LoraDbClient.CreateHttp(null!);
+            return Task.CompletedTask;
+        })
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentNullException>();
     }
-
-    // ── IHttpClientFactory overload ──────────────────────────────────
 
     [Test]
     public async Task CreateHttp_WithFactory_ExecutesQuery()
@@ -219,9 +221,6 @@ public class HttpLoraDbTransportTests
 
         await transport.DisposeAsync();
 
-        // The HttpClient should still be usable after the transport is disposed;
-        // the factory owns the client lifetime, not the transport.
-        // If the transport incorrectly disposed the client this would throw ObjectDisposedException.
         var response = await httpClient.GetAsync("/");
         await Assert.That((int)response.StatusCode).IsEqualTo(200);
     }
@@ -229,7 +228,11 @@ public class HttpLoraDbTransportTests
     [Test]
     public async Task CreateHttp_WithNullFactory_ThrowsArgumentNullException()
     {
-        await Assert.That(() => Task.FromResult(LoraDbClient.CreateHttp(Endpoint, (IHttpClientFactory)null!)))
+        await Assert.That(() =>
+        {
+            LoraDbClient.CreateHttp(Endpoint, (IHttpClientFactory)null!);
+            return Task.CompletedTask;
+        })
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentNullException>();
@@ -239,13 +242,15 @@ public class HttpLoraDbTransportTests
     public async Task CreateHttp_WithFactoryAndNullEndpoint_ThrowsArgumentNullException()
     {
         var factory = new FakeHttpClientFactory(new HttpClient());
-        await Assert.That(() => Task.FromResult(LoraDbClient.CreateHttp(null!, factory)))
+        await Assert.That(() =>
+        {
+            LoraDbClient.CreateHttp(null!, factory);
+            return Task.CompletedTask;
+        })
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentNullException>();
     }
-
-    // ── helpers ──────────────────────────────────────────────────────
 
     private sealed class FakeHttpClientFactory(HttpClient client) : IHttpClientFactory
     {
@@ -261,4 +266,3 @@ public class HttpLoraDbTransportTests
         }
     }
 }
-

@@ -4,13 +4,8 @@ using TUnit.Assertions.Extensions;
 
 namespace LoraDb.Client.Tests;
 
-/// <summary>
-/// Tests for the IServiceCollection extension methods: AddLoraDb.
-/// </summary>
 public class DependencyInjectionTests
 {
-    // ── Action-based registration ────────────────────────────────────
-
     [Test]
     public async Task AddLoraDb_Action_RegistersILoraDbClient()
     {
@@ -45,8 +40,6 @@ public class DependencyInjectionTests
         await Assert.That(a).IsEqualTo(b);
     }
 
-    // ── Connection string registration ───────────────────────────────
-
     [Test]
     public async Task AddLoraDb_ConnectionString_ParsesEndpoint()
     {
@@ -70,8 +63,6 @@ public class DependencyInjectionTests
         await Assert.That(client).IsNotNull();
     }
 
-    // ── Options-object registration ──────────────────────────────────
-
     [Test]
     public async Task AddLoraDb_OptionsObject_RegistersILoraDbClient()
     {
@@ -87,8 +78,6 @@ public class DependencyInjectionTests
 
         await Assert.That(client).IsNotNull();
     }
-
-    // ── Validation ───────────────────────────────────────────────────
 
     [Test]
     public async Task AddLoraDb_NullAction_ThrowsArgumentNullException()
@@ -131,13 +120,15 @@ public class DependencyInjectionTests
         services.AddLoraDb(o => o.Mode = LoraDbClientMode.Http);
         var sp = services.BuildServiceProvider();
 
-        await Assert.That(() => Task.FromResult(sp.GetRequiredService<ILoraDbClient>()))
+        await Assert.That(() =>
+        {
+            sp.GetRequiredService<ILoraDbClient>();
+            return Task.CompletedTask;
+        })
             .ThrowsException()
             .And
             .IsTypeOf<InvalidOperationException>();
     }
-
-    // ── Options parsing ──────────────────────────────────────────────
 
     [Test]
     public async Task ConnectionString_Parse_ServerSetsEndpointAndHttpMode()
@@ -168,7 +159,11 @@ public class DependencyInjectionTests
     [Test]
     public async Task ConnectionString_EmptyString_ThrowsArgumentException()
     {
-        await Assert.That(() => Task.FromResult(LoraDbClientOptions.FromConnectionString("")))
+        await Assert.That(() =>
+        {
+            LoraDbClientOptions.FromConnectionString("");
+            return Task.CompletedTask;
+        })
             .ThrowsException()
             .And
             .IsTypeOf<ArgumentException>();
