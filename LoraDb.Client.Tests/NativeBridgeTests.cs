@@ -97,6 +97,8 @@ public class NativeBridgeTests
         Directory.CreateDirectory(Path.GetDirectoryName(fakeLib)!);
         try
         {
+            // FindLibraryPath only calls File.Exists — it never reads or loads the file,
+            // so an empty placeholder is sufficient to exercise the happy path.
             File.WriteAllBytes(fakeLib, []);
             var result = LoraDbNativeLoader.FindLibraryPath("lora_ffi");
             await Assert.That(result).IsNotNull();
@@ -116,6 +118,7 @@ public class NativeBridgeTests
         Directory.CreateDirectory(Path.GetDirectoryName(fakeLib)!);
         try
         {
+            // FindLibraryPath only calls File.Exists — content is irrelevant here.
             File.WriteAllBytes(fakeLib, []);
             // Both casing variants must resolve to the same path.
             var lower = LoraDbNativeLoader.FindLibraryPath("lora_ffi");
