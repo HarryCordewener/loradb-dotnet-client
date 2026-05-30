@@ -18,6 +18,18 @@ public sealed class LoraDbClient : ILoraDbClient
         return new LoraDbClient(new HttpLoraDbTransport(endpoint, httpClient));
     }
 
+    /// <summary>
+    /// Creates an HTTP-mode client using an <see cref="IHttpClientFactory"/>.
+    /// Prefer this overload when the factory is available (e.g. from DI) so the
+    /// underlying <see cref="HttpClient"/> lifetime is managed correctly.
+    /// </summary>
+    public static LoraDbClient CreateHttp(Uri endpoint, IHttpClientFactory httpClientFactory, string clientName = nameof(LoraDbClient))
+    {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        return new LoraDbClient(new HttpLoraDbTransport(endpoint, httpClientFactory, clientName));
+    }
+
     public static LoraDbClient CreateEmbedded(ILoraDbNativeBridge? nativeBridge = null)
     {
         return new LoraDbClient(new EmbeddedLoraDbTransport(nativeBridge ?? new PInvokeLoraDbNativeBridge()));

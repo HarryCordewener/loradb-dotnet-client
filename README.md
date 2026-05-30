@@ -47,9 +47,21 @@ dotnet test LoraDb.Client.slnx
 Integration tests exercise real HTTP and Embedded modes:
 
 - `LORADB_RUN_INTEGRATION_TESTS=1`
-- `LORADB_HTTP_IMAGE=<loradb-server-image>`
+- `LORADB_HTTP_IMAGE=<loradb-server-image>` *(optional — defaults to `ghcr.io/lora-db/lora-server:latest`)*
 - `LORADB_FFI_LIBRARY_PATH=<absolute-path-to-lora_ffi-binary>`
 
 ```bash
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
+```
+
+### Building/pinning the native `lora_ffi` library
+
+The pinned upstream version is tracked in `LoraDb.Client.Native/lora-ffi.version`.
+
+```bash
+# Build using the currently pinned upstream ref
+./scripts/build-lora-ffi.sh
+
+# Update to a new upstream ref and persist the pin
+./scripts/build-lora-ffi.sh --ref <tag-or-commit> --update-pin
 ```

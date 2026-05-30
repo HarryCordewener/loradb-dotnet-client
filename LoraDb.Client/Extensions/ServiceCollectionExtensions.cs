@@ -83,7 +83,6 @@ public static class ServiceCollectionExtensions
         }
 
         var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-        var httpClient = httpClientFactory.CreateClient(nameof(LoraDbClient));
-        return LoraDbClient.CreateHttp(options.Endpoint, httpClient);
+        return LoraDbClient.CreateHttp(options.Endpoint, httpClientFactory);
     }
 }
