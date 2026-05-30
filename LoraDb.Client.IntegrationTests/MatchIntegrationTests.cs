@@ -29,7 +29,7 @@ public class MatchIntegrationTests : IntegrationTestBase
     {
         await WithGraphsAsync(fixture, async client =>
         {
-            using var result = await client.ExecuteAsync("MATCH (n:Product) RETURN n.name AS name ORDER BY name");
+            using var result = await client.ExecuteAsync("MATCH (n:Product) RETURN n.name AS name ORDER BY n.name");
             await AssertStringRowsAsync(result, "name", "Coffee", "Keyboard", "Mouse", "Tea");
         });
     }

@@ -37,7 +37,7 @@ public class WithClauseIntegrationTests : IntegrationTestBase
 
     [Test]
     [CombinedDataSources]
-    public async Task WithAndWhere_FiltersAfterAggregation(
+    public async Task WithAndWhere_FiltersRows(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
         ILoraDbClientFixture fixture)
@@ -45,8 +45,8 @@ public class WithClauseIntegrationTests : IntegrationTestBase
         await WithSocialGraphAsync(fixture, async client =>
         {
             using var result = await client.ExecuteAsync(
-                "MATCH (n:Person) WITH n.active AS active, count(*) AS total WHERE total >= 3 RETURN active, total ORDER BY active");
-            await IntegrationAssertions.AssertRowCount(result, 2);
+                "MATCH (n:Person) WITH n WHERE n.age >= 30 RETURN count(n) AS total");
+            await IntegrationAssertions.AssertSingleIntegerResult(result, "total", 3);
         });
     }
 

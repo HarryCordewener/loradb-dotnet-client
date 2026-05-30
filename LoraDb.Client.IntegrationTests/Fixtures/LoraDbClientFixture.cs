@@ -14,7 +14,7 @@ public interface ILoraDbClientFixture : IAsyncInitializer, IAsyncDisposable
 
 public sealed class EmbeddedClientFixture : ILoraDbClientFixture
 {
-    private string? _ffiLibraryPath;
+    private PInvokeLoraDbNativeBridge? _sharedBridge;
 
     public Task InitializeAsync()
     {
@@ -28,19 +28,39 @@ public sealed class EmbeddedClientFixture : ILoraDbClientFixture
         if (!libraryInfo.Exists || libraryInfo.Length == 0)
             Skip.Test($"Native library not found or not populated: {ffiLibraryPath}");
 
-        _ffiLibraryPath = ffiLibraryPath;
+        _sharedBridge = new PInvokeLoraDbNativeBridge(ffiLibraryPath);
         return Task.CompletedTask;
     }
 
     public LoraDbClient CreateClient()
     {
-        if (string.IsNullOrWhiteSpace(_ffiLibraryPath))
+        if (_sharedBridge is null)
             throw new InvalidOperationException("Embedded fixture has not been initialized.");
 
-        return LoraDbClient.CreateEmbedded(new PInvokeLoraDbNativeBridge(_ffiLibraryPath));
+        return LoraDbClient.CreateEmbedded(new NonOwningNativeBridge(_sharedBridge));
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public ValueTask DisposeAsync()
+    {
+        _sharedBridge?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// Wraps a shared <see cref="ILoraDbNativeBridge"/> without taking ownership.
+    /// <see cref="Dispose"/> is a no-op so that individual clients can be disposed
+    /// independently while the underlying database handle remains alive.
+    /// </summary>
+    private sealed class NonOwningNativeBridge : ILoraDbNativeBridge
+    {
+        private readonly ILoraDbNativeBridge _inner;
+
+        public NonOwningNativeBridge(ILoraDbNativeBridge inner) => _inner = inner;
+
+        public string ExecuteJson(string requestJson) => _inner.ExecuteJson(requestJson);
+
+        public void Dispose() { }
+    }
 }
 
 public sealed class HttpClientFixture : ILoraDbClientFixture
