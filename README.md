@@ -26,12 +26,19 @@ using LoraDb.Client;
 
 await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/"));
 
-using var result = await client.ExecuteAsync(
+var rows = await client.ExecuteRowsAsync<UserNameRow>(
     "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
     new Dictionary<string, object?> { ["name"] = "Alice" });
 
-var root = result.Root;
+var firstName = rows[0].Name;
+
+public sealed class UserNameRow
+{
+    public string Name { get; init; } = string.Empty;
+}
 ```
+
+Need low-level JSON access? `ExecuteAsync` still returns `LoraDbQueryResult` with `Root`.
 
 ## Usage documentation
 

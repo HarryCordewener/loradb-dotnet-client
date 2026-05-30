@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace LoraDb.Client.Extensions;
 
 public enum LoraDbClientMode
@@ -13,6 +15,8 @@ public sealed class LoraDbClientOptions
     public Uri? Endpoint { get; set; }
 
     public string NativeLibraryName { get; set; } = "lora_ffi";
+
+    public JsonSerializerOptions? SerializerOptions { get; set; }
 
     public static LoraDbClientOptions FromConnectionString(string connectionString)
     {

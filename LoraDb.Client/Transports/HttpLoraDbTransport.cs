@@ -1,31 +1,24 @@
 using System.Net.Http.Json;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using LoraDb.Client.Models;
+using LoraDb.Client.Serialization;
 
 namespace LoraDb.Client.Transports;
 
 public sealed class HttpLoraDbTransport : ILoraDbTransport
 {
-    // Use relaxed JSON escaping so Cypher syntax characters like `>` (e.g. `->`)
-    // are serialized as-is rather than as \u003e. This JSON is only sent over a
-    // trusted internal/local socket to the LoraDB server and is never rendered in
-    // an HTML context, so XSS concerns do not apply.
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
-
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
+    private readonly JsonSerializerOptions _resultSerializerOptions;
 
-    public HttpLoraDbTransport(Uri endpoint, HttpClient? httpClient = null)
+    public HttpLoraDbTransport(Uri endpoint, HttpClient? httpClient = null, JsonSerializerOptions? serializerOptions = null)
     {
         if (endpoint is null)
             throw new ArgumentNullException(nameof(endpoint));
 
         _ownsHttpClient = httpClient is null;
         _httpClient = httpClient ?? new HttpClient();
+        _resultSerializerOptions = LoraDbJsonSerializerOptions.CreateResultOptions(serializerOptions);
 
         if (_httpClient.BaseAddress is null)
         {
@@ -38,7 +31,11 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
     /// The factory manages the <see cref="HttpClient"/> lifetime; this transport
     /// will never dispose the client it receives.
     /// </summary>
-    public HttpLoraDbTransport(Uri endpoint, IHttpClientFactory httpClientFactory, string clientName = nameof(HttpLoraDbTransport))
+    public HttpLoraDbTransport(
+        Uri endpoint,
+        IHttpClientFactory httpClientFactory,
+        string clientName = nameof(HttpLoraDbTransport),
+        JsonSerializerOptions? serializerOptions = null)
     {
         if (endpoint is null)
             throw new ArgumentNullException(nameof(endpoint));
@@ -47,6 +44,7 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
 
         _ownsHttpClient = false; // lifetime is managed by the factory
         _httpClient = httpClientFactory.CreateClient(clientName);
+        _resultSerializerOptions = LoraDbJsonSerializerOptions.CreateResultOptions(serializerOptions);
 
         if (_httpClient.BaseAddress is null)
         {
@@ -62,13 +60,13 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
             Format = format,
         };
 
-        using var response = await _httpClient.PostAsJsonAsync("query", request, SerializerOptions, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.PostAsJsonAsync("query", request, LoraDbJsonSerializerOptions.RequestSerializationOptions, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
         using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        return new LoraDbQueryResult(document);
+        return new LoraDbQueryResult(document, _resultSerializerOptions);
     }
 
     public ValueTask DisposeAsync()

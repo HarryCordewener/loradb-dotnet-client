@@ -37,9 +37,16 @@ await using var client = LoraDbClient.CreateEmbedded();
 ## 2) Execute queries
 
 ```csharp
-using var result = await client.ExecuteAsync(
+var rows = await client.ExecuteRowsAsync<UserNameRow>(
     "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
     new Dictionary<string, object?> { ["name"] = "Alice" });
+
+var name = rows[0].Name;
+
+public sealed class UserNameRow
+{
+    public string Name { get; init; } = string.Empty;
+}
 ```
 
 - `query`: required Cypher query string
@@ -52,20 +59,32 @@ Avoid passing null/whitespace queries; they throw `ArgumentException`.
 
 ## 3) Read results
 
-`ExecuteAsync` returns `LoraDbQueryResult`, which wraps a `JsonDocument`.
+For most use cases, use typed readers:
 
 ```csharp
 using var result = await client.ExecuteAsync("MATCH (u:User) RETURN u.name AS name");
-
-var root = result.Root; // JsonElement
+var typedRows = result.ReadRows<UserNameRow>();
 ```
 
-Typical HTTP response payload shapes:
+Typed format readers:
 
-- `rows` / `rowArrays`: includes `columns` and `rows`
-- `combined`: includes `columns`, `data`, and `graph`
+- `ReadRows<T>()` and `ReadRowsEnvelope<T>()`
+- `ReadRowArrays<T>()`
+- `ReadGraph<TNode, TRelationship>()`
+- `ReadCombined<TData, TNode, TRelationship>()`
 
-Inspect `result.Root` according to the format your query uses.
+`ExecuteAsync` still returns `LoraDbQueryResult` with `Root` for low-level/manual JSON access.
+
+For AOT/source-generated serialization, use overloads that accept `JsonTypeInfo<T>`, for example:
+
+- `result.ReadRows(MyJsonContext.Default.UserNameRow)`
+- `client.ExecuteRowsAsync(query, MyJsonContext.Default.UserNameRow)`
+
+You can provide custom `JsonSerializerOptions` when creating clients:
+
+- `LoraDbClient.CreateHttp(endpoint, httpClient, serializerOptions: options)`
+- `LoraDbClient.CreateEmbedded(serializerOptions: options)`
+- `services.AddLoraDb(options => options.SerializerOptions = customOptions)`
 
 ---
 
@@ -128,6 +147,7 @@ Required exported symbols in native library:
 - Always `using` query results to dispose the underlying `JsonDocument`.
 - HTTP mode throws on non-success HTTP responses.
 - Embedded mode throws `InvalidOperationException` on native execution failures.
+- Typed readers throw `InvalidOperationException` when the payload shape does not match the selected format reader.
 
 ---
 
