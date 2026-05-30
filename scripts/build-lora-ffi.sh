@@ -14,7 +14,7 @@ Options:
   --out <path>          Output path for the built native library
   --repo-url <url>      Upstream repository URL (default: https://github.com/lora-db/lora.git)
   --update-pin          Persist --ref into LoraDb.Client.Native/lora-ffi.version
-  --keep-workdir        Keep the temporary /tmp build directory for inspection
+  --keep-workdir        Keep the temporary build directory for inspection
   -h, --help            Show this help
 EOF
 }
@@ -120,7 +120,7 @@ if [[ -z "$out_path" ]]; then
   fi
 fi
 
-tmp_dir="$(mktemp -d /tmp/lora-ffi-build-XXXXXX)"
+tmp_dir="$(mktemp -d)"
 cleanup() {
   if [[ "$keep_workdir" == true ]]; then
     echo "Keeping temporary directory: $tmp_dir"
