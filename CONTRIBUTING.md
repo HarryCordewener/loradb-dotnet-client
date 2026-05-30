@@ -24,6 +24,30 @@ Run them with:
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
 ```
 
+## Building and pinning `lora_ffi`
+
+The native embedded library comes from the upstream `lora-db/lora` monorepo and is pinned in:
+
+- `LoraDb.Client.Native/lora-ffi.version`
+
+Build and copy the native binary for your host RID with:
+
+```bash
+./scripts/build-lora-ffi.sh
+```
+
+To move to a new upstream version and persist that pin:
+
+```bash
+./scripts/build-lora-ffi.sh --ref <tag-or-commit> --update-pin
+```
+
+For cross-target output, pass an explicit target and output path:
+
+```bash
+./scripts/build-lora-ffi.sh --target aarch64-unknown-linux-gnu --out LoraDb.Client.Native/runtimes/linux-arm64/native/liblora_ffi.so
+```
+
 To run HTTP integration tests in GitHub Actions, optionally set this repository variable to override the default (`ghcr.io/lora-db/lora-server:latest`):
 
 - `LORADB_HTTP_IMAGE=<loradb-server-image>`

@@ -53,3 +53,15 @@ Integration tests exercise real HTTP and Embedded modes:
 ```bash
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
 ```
+
+### Building/pinning the native `lora_ffi` library
+
+The pinned upstream version is tracked in `LoraDb.Client.Native/lora-ffi.version`.
+
+```bash
+# Build using the currently pinned upstream ref
+./scripts/build-lora-ffi.sh
+
+# Update to a new upstream ref and persist the pin
+./scripts/build-lora-ffi.sh --ref <tag-or-commit> --update-pin
+```
