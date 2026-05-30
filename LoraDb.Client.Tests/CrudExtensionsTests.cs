@@ -123,8 +123,9 @@ public class CrudExtensionsTests
         var bridge = new FakeNativeBridge("""{"rows":[{"n":{"id":1,"labels":["User"],"properties":{"name":"Alice"}}}]}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        _ = await client.FindNodesAsync<NodeRow>("User",
-            new Dictionary<string, object?> { ["name"] = "Alice" });
+        await foreach (var _ in client.FindNodesAsync<NodeRow>("User",
+            new Dictionary<string, object?> { ["name"] = "Alice" }))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var query = doc.RootElement.GetProperty("query").GetString()!;
@@ -137,8 +138,9 @@ public class CrudExtensionsTests
         var bridge = new FakeNativeBridge("""{"rows":[]}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        _ = await client.FindNodesAsync<NodeRow>("User",
-            new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 });
+        await foreach (var _ in client.FindNodesAsync<NodeRow>("User",
+            new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 }))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var prms = doc.RootElement.GetProperty("params");
@@ -152,7 +154,8 @@ public class CrudExtensionsTests
         var bridge = EmptyBridge();
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        _ = await client.FindNodesAsync<NodeRow>("Tag");
+        await foreach (var _ in client.FindNodesAsync<NodeRow>("Tag"))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var query = doc.RootElement.GetProperty("query").GetString()!;
@@ -165,7 +168,8 @@ public class CrudExtensionsTests
         var bridge = EmptyBridge();
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        _ = await client.FindNodesAsync<NodeRow>("Tag", new Dictionary<string, object?>());
+        await foreach (var _ in client.FindNodesAsync<NodeRow>("Tag", new Dictionary<string, object?>()))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var query = doc.RootElement.GetProperty("query").GetString()!;
@@ -179,7 +183,9 @@ public class CrudExtensionsTests
             """{"rows":[{"n":{"id":1,"labels":["P"],"properties":{"name":"A"}}},{"n":{"id":2,"labels":["P"],"properties":{"name":"B"}}}]}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        var rows = await client.FindNodesAsync<NodeRow>("P");
+        var rows = new List<NodeRow>();
+        await foreach (var row in client.FindNodesAsync<NodeRow>("P"))
+            rows.Add(row);
 
         await Assert.That(rows.Count).IsEqualTo(2);
         await Assert.That(rows[0].N.Id).IsEqualTo(1);
@@ -232,9 +238,10 @@ public class CrudExtensionsTests
         var bridge = NodeBridge(1, "User", """{"active":false}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        _ = await client.UpdateNodesAsync<NodeRow>("User",
+        await foreach (var _ in client.UpdateNodesAsync<NodeRow>("User",
             match: new Dictionary<string, object?> { ["id"] = "u1" },
-            properties: new Dictionary<string, object?> { ["active"] = false });
+            properties: new Dictionary<string, object?> { ["active"] = false }))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var query = doc.RootElement.GetProperty("query").GetString()!;
@@ -250,9 +257,10 @@ public class CrudExtensionsTests
         var bridge = NodeBridge(1, "U", "{}");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        _ = await client.UpdateNodesAsync<NodeRow>("U",
+        await foreach (var _ in client.UpdateNodesAsync<NodeRow>("U",
             match: new Dictionary<string, object?> { ["id"] = "u1" },
-            properties: new Dictionary<string, object?> { ["score"] = 99 });
+            properties: new Dictionary<string, object?> { ["score"] = 99 }))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var prms = doc.RootElement.GetProperty("params");
@@ -266,9 +274,13 @@ public class CrudExtensionsTests
         var bridge = EmptyBridge();
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        await Assert.That(async () => await client.UpdateNodesAsync<NodeRow>("U",
-                match: new Dictionary<string, object?>(),
-                properties: new Dictionary<string, object?> { ["x"] = 1 }))
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.UpdateNodesAsync<NodeRow>("U",
+                                   match: new Dictionary<string, object?>(),
+                                   properties: new Dictionary<string, object?> { ["x"] = 1 }))
+                { }
+            })
             .ThrowsException()
             .And.IsTypeOf<ArgumentException>();
     }
@@ -279,9 +291,13 @@ public class CrudExtensionsTests
         var bridge = EmptyBridge();
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        await Assert.That(async () => await client.UpdateNodesAsync<NodeRow>("U",
-                match: new Dictionary<string, object?> { ["id"] = 1 },
-                properties: new Dictionary<string, object?>()))
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.UpdateNodesAsync<NodeRow>("U",
+                                   match: new Dictionary<string, object?> { ["id"] = 1 },
+                                   properties: new Dictionary<string, object?>()))
+                { }
+            })
             .ThrowsException()
             .And.IsTypeOf<ArgumentException>();
     }
@@ -293,9 +309,10 @@ public class CrudExtensionsTests
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
         // Both match and set have a "name" key — the prefixes keep them separate
-        _ = await client.UpdateNodesAsync<NodeRow>("U",
+        await foreach (var _ in client.UpdateNodesAsync<NodeRow>("U",
             match: new Dictionary<string, object?> { ["name"] = "Alice" },
-            properties: new Dictionary<string, object?> { ["name"] = "Bob" });
+            properties: new Dictionary<string, object?> { ["name"] = "Bob" }))
+        { }
 
         using var doc = await ParseLastRequestAsync(bridge);
         var prms = doc.RootElement.GetProperty("params");

@@ -72,8 +72,10 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
             using var _ = await client.ExecuteAsync(
                 $"CREATE (:FindTest {{key: '{key}', active: true}}), (:FindTest {{key: '{key}-other', active: false}})");
 
-            var rows = await client.FindNodesAsync<NodeRow>("FindTest",
-                new Dictionary<string, object?> { ["key"] = key });
+            var rows = new List<NodeRow>();
+            await foreach (var row in client.FindNodesAsync<NodeRow>("FindTest",
+                               new Dictionary<string, object?> { ["key"] = key }))
+                rows.Add(row);
 
             await Assert.That(rows.Count).IsEqualTo(1);
             await Assert.That(rows[0].N.Properties.GetProperty("key").GetString()).IsEqualTo(key);
@@ -92,7 +94,9 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
             using var _ = await client.ExecuteAsync(
                 "CREATE (:AllNodes {n: 1}), (:AllNodes {n: 2}), (:AllNodes {n: 3})");
 
-            var rows = await client.FindNodesAsync<NodeRow>("AllNodes");
+            var rows = new List<NodeRow>();
+            await foreach (var row in client.FindNodesAsync<NodeRow>("AllNodes"))
+                rows.Add(row);
 
             await Assert.That(rows.Count).IsEqualTo(3);
         });
@@ -149,9 +153,11 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
             var key = UniqueValue("crud-update");
             using var _ = await client.ExecuteAsync($"CREATE (:UpdateTest {{key: '{key}', score: 10}})");
 
-            var updated = await client.UpdateNodesAsync<NodeRow>("UpdateTest",
-                match: new Dictionary<string, object?> { ["key"] = key },
-                properties: new Dictionary<string, object?> { ["score"] = 99 });
+            var updated = new List<NodeRow>();
+            await foreach (var row in client.UpdateNodesAsync<NodeRow>("UpdateTest",
+                               match: new Dictionary<string, object?> { ["key"] = key },
+                               properties: new Dictionary<string, object?> { ["score"] = 99 }))
+                updated.Add(row);
 
             await Assert.That(updated.Count).IsEqualTo(1);
             await Assert.That(updated[0].N.Properties.GetProperty("score").GetInt32()).IsEqualTo(99);

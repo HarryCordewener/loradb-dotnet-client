@@ -5,7 +5,7 @@ namespace LoraDb.Client;
 
 public static class LoraDbClientTypedExtensions
 {
-    public static async Task<IReadOnlyList<T>> ExecuteRowsAsync<T>(
+    public static IAsyncEnumerable<T> ExecuteRowsAsync<T>(
         this ILoraDbClient client,
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
@@ -14,11 +14,10 @@ public static class LoraDbClientTypedExtensions
         if (client is null)
             throw new ArgumentNullException(nameof(client));
 
-        using var result = await client.ExecuteAsync(query, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return result.ReadRows<T>();
+        return client.ExecuteRowsStreamAsync<T>(query, parameters, cancellationToken);
     }
 
-    public static async Task<IReadOnlyList<T>> ExecuteRowsAsync<T>(
+    public static IAsyncEnumerable<T> ExecuteRowsAsync<T>(
         this ILoraDbClient client,
         string query,
         JsonTypeInfo<T> typeInfo,
@@ -30,8 +29,7 @@ public static class LoraDbClientTypedExtensions
         if (typeInfo is null)
             throw new ArgumentNullException(nameof(typeInfo));
 
-        using var result = await client.ExecuteAsync(query, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return result.ReadRows(typeInfo);
+        return client.ExecuteRowsStreamAsync(query, typeInfo, parameters, cancellationToken);
     }
 
     /// <summary>

@@ -37,11 +37,16 @@ await using var client = LoraDbClient.CreateEmbedded();
 ## 2) Execute queries
 
 ```csharp
-var rows = await client.ExecuteRowsAsync<UserNameRow>(
-    "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
-    new Dictionary<string, object?> { ["name"] = "Alice" });
+UserNameRow? first = null;
+await foreach (var row in client.ExecuteRowsAsync<UserNameRow>(
+                   "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
+                   new Dictionary<string, object?> { ["name"] = "Alice" }))
+{
+    first = row;
+    break;
+}
 
-var name = rows[0].Name;
+var name = first?.Name;
 
 public sealed class UserNameRow
 {
@@ -72,6 +77,8 @@ Typed format readers:
 - `ReadRowArrays<T>()`
 - `ReadGraph<TNode, TRelationship>()`
 - `ReadCombined<TData, TNode, TRelationship>()`
+
+`ExecuteRowsAsync` streams `IAsyncEnumerable<T>` for `await foreach` consumption.
 
 `ExecuteAsync` still returns `LoraDbQueryResult` with `Root` for low-level/manual JSON access.
 
@@ -190,8 +197,11 @@ var empty = await client.CreateNodeAsync<PersonNode>("Tag");
 
 ```csharp
 // MATCH (n:Person {name: $filter_name}) RETURN n
-var all = await client.FindNodesAsync<PersonNode>("Person",
-    new Dictionary<string, object?> { ["name"] = "Alice" });
+await foreach (var person in client.FindNodesAsync<PersonNode>("Person",
+                   new Dictionary<string, object?> { ["name"] = "Alice" }))
+{
+    // process person
+}
 
 // MATCH (n:Person {id: $filter_id}) RETURN n LIMIT 1
 var one = await client.FindNodeAsync<PersonNode>("Person",
@@ -203,9 +213,12 @@ var one = await client.FindNodeAsync<PersonNode>("Person",
 
 ```csharp
 // MATCH (n:Person {id: $match_id}) SET n.age = $set_age RETURN n
-var updated = await client.UpdateNodesAsync<PersonNode>("Person",
-    match: new Dictionary<string, object?> { ["id"] = 42 },
-    properties: new Dictionary<string, object?> { ["age"] = 31 });
+await foreach (var updated in client.UpdateNodesAsync<PersonNode>("Person",
+                   match: new Dictionary<string, object?> { ["id"] = 42 },
+                   properties: new Dictionary<string, object?> { ["age"] = 31 }))
+{
+    // process updated node
+}
 ```
 
 ### Delete

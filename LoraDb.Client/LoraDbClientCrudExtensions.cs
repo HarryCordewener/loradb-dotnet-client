@@ -88,7 +88,7 @@ public static class LoraDbClientCrudExtensions
 
     /// <summary>
     /// Finds all nodes with the given <paramref name="label"/> matching the optional
-    /// <paramref name="filters"/> and returns them as a list of <typeparamref name="T"/>.
+    /// <paramref name="filters"/> and streams rows deserialized as <typeparamref name="T"/>.
     /// </summary>
     /// <remarks>
     /// Generated Cypher (with filters):
@@ -96,7 +96,7 @@ public static class LoraDbClientCrudExtensions
     /// Generated Cypher (no filters):
     /// <code>MATCH (n:Person) RETURN n</code>
     /// </remarks>
-    public static async Task<IReadOnlyList<T>> FindNodesAsync<T>(
+    public static IAsyncEnumerable<T> FindNodesAsync<T>(
         this ILoraDbClient client,
         string label,
         IReadOnlyDictionary<string, object?>? filters = null,
@@ -119,8 +119,7 @@ public static class LoraDbClientCrudExtensions
             query = $"MATCH (n:{label}) RETURN n";
         }
 
-        using var result = await client.ExecuteAsync(query, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return result.ReadRows<T>();
+        return client.ExecuteRowsStreamAsync<T>(query, parameters, cancellationToken);
     }
 
     /// <summary>
@@ -171,7 +170,7 @@ public static class LoraDbClientCrudExtensions
     /// <code>MATCH (n:Person {id: $match_id}) SET n.age = $set_age RETURN n</code>
     /// </remarks>
     /// <exception cref="ArgumentException"><paramref name="match"/> or <paramref name="properties"/> is empty.</exception>
-    public static async Task<IReadOnlyList<T>> UpdateNodesAsync<T>(
+    public static IAsyncEnumerable<T> UpdateNodesAsync<T>(
         this ILoraDbClient client,
         string label,
         IReadOnlyDictionary<string, object?> match,
@@ -194,8 +193,7 @@ public static class LoraDbClientCrudExtensions
 
         var query = $"MATCH (n:{label} {matchMap}) SET {setClause} RETURN n";
 
-        using var result = await client.ExecuteAsync(query, allParams, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return result.ReadRows<T>();
+        return client.ExecuteRowsStreamAsync<T>(query, allParams, cancellationToken);
     }
 
     // ── Delete ─────────────────────────────────────────────────────────────────

@@ -26,11 +26,16 @@ using LoraDb.Client;
 
 await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/"));
 
-var rows = await client.ExecuteRowsAsync<UserNameRow>(
-    "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
-    new Dictionary<string, object?> { ["name"] = "Alice" });
+UserNameRow? first = null;
+await foreach (var row in client.ExecuteRowsAsync<UserNameRow>(
+                   "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
+                   new Dictionary<string, object?> { ["name"] = "Alice" }))
+{
+    first = row;
+    break;
+}
 
-var name = rows[0].Name;
+var name = first?.Name;
 
 public sealed class UserNameRow
 {

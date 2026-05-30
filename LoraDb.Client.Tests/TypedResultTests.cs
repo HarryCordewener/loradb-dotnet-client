@@ -273,7 +273,9 @@ public class TypedResultTests
         var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"}]}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        var rows = await client.ExecuteRowsAsync<PersonRow>("MATCH (n) RETURN n.name AS name");
+        var rows = new List<PersonRow>();
+        await foreach (var row in client.ExecuteRowsAsync<PersonRow>("MATCH (n) RETURN n.name AS name"))
+            rows.Add(row);
 
         await Assert.That(rows.Count).IsEqualTo(1);
         await Assert.That(rows[0].Name).IsEqualTo("Alice");
@@ -285,7 +287,9 @@ public class TypedResultTests
         var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"}]}""");
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        var rows = await client.ExecuteRowsAsync("MATCH (n) RETURN n.name AS name", TypedResultJsonContext.Default.PersonRow);
+        var rows = new List<PersonRow>();
+        await foreach (var row in client.ExecuteRowsAsync("MATCH (n) RETURN n.name AS name", TypedResultJsonContext.Default.PersonRow))
+            rows.Add(row);
 
         await Assert.That(rows.Count).IsEqualTo(1);
         await Assert.That(rows[0].Name).IsEqualTo("Alice");
