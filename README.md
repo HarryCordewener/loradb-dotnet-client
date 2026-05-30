@@ -1,38 +1,64 @@
 # LoraDb.Client
 
-A modern .NET client library for [LoraDB](https://loradb.com) with two runtime modes:
+A modern .NET client for [LoraDB](https://loradb.com), supporting:
 
 - **HTTP mode** against `lora-server` (`POST /query`)
-- **Embedded mode** via **P/Invoke** into a Rust FFI library
+- **Embedded mode** via P/Invoke with `lora_ffi`
 
-## Install
+## Why use this client?
+
+- Async-first API (`ExecuteAsync`)
+- Parameterized queries
+- Pluggable runtime mode (HTTP or embedded)
+- DI integration via `Microsoft.Extensions.DependencyInjection`
+- Targets **net10.0** and **netstandard2.1**
+
+## Installation
 
 ```bash
 dotnet add package LoraDb.Client
 ```
 
-## HTTP mode
+## Quick start
 
 ```csharp
+using LoraDb.Client;
+
 await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/"));
+
 using var result = await client.ExecuteAsync(
     "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
     new Dictionary<string, object?> { ["name"] = "Alice" });
+
+var root = result.Root;
 ```
 
-## Embedded mode (Rust FFI)
+## Usage documentation
 
-By default this expects a native library named `lora_ffi` with the exported symbols:
+For a practical, summarized guide with HTTP mode, embedded mode, DI setup, result handling, and troubleshooting, see:
 
-- `lora_execute_json`
-- `lora_string_free`
+- [docs/USAGE.md](docs/USAGE.md)
 
-The `LoraDb.Client` NuGet package ships RID-specific native assets under `runtimes/{rid}/native/` for common desktop/server platforms.
+## Runtime modes
+
+### HTTP mode
+
+```csharp
+await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/"));
+```
+
+### Embedded mode
 
 ```csharp
 await using var client = LoraDbClient.CreateEmbedded();
-using var result = await client.ExecuteAsync("MATCH (u:User) RETURN u");
 ```
+
+Embedded mode uses `lora_ffi` and expects these exported symbols:
+
+- `lora_db_new`
+- `lora_db_free`
+- `lora_db_execute_json`
+- `lora_string_free`
 
 ## Development
 
@@ -44,17 +70,24 @@ dotnet test LoraDb.Client.slnx
 
 ### Integration tests
 
-Integration tests exercise real HTTP and Embedded modes:
+Integration tests exercise real HTTP and embedded modes.
+
+Required environment variables:
 
 - `LORADB_RUN_INTEGRATION_TESTS=1`
-- `LORADB_HTTP_IMAGE=<loradb-server-image>` *(optional — defaults to `ghcr.io/lora-db/lora-server:latest`)*
 - `LORADB_FFI_LIBRARY_PATH=<absolute-path-to-lora_ffi-binary>`
+
+Optional:
+
+- `LORADB_HTTP_IMAGE=<loradb-server-image>` (defaults to `ghcr.io/lora-db/lora-server:latest`)
+
+Run integration tests:
 
 ```bash
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
 ```
 
-### Building/pinning the native `lora_ffi` library
+### Build/pin native `lora_ffi`
 
 The pinned upstream version is tracked in `LoraDb.Client.Native/lora-ffi.version`.
 
