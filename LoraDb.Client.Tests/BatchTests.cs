@@ -236,6 +236,138 @@ public class BatchTests
         await Assert.That(batchResult.Results[0].Root.GetProperty("rows").GetArrayLength()).IsEqualTo(0);
     }
 
+    // ── AddRange ───────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task AddRange_Queries_AddsAllAndReturnsThis()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+        var returned = batch.AddRange(new[] { "MATCH (a) RETURN a", "MATCH (b) RETURN b", "MATCH (c) RETURN c" });
+
+        await Assert.That(object.ReferenceEquals(batch, returned)).IsTrue();
+        await Assert.That(batch.Count).IsEqualTo(3);
+    }
+
+    [Test]
+    public async Task AddRange_Queries_EmptyEnumerable_AddsNothing()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+        batch.AddRange(Array.Empty<string>());
+
+        await Assert.That(batch.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task AddRange_Queries_NullEnumerable_ThrowsArgumentNullException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+
+        await Assert.That(() => batch.AddRange((IEnumerable<string>)null!))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task AddRange_Queries_NullOrWhitespaceInList_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+
+        await Assert.That(() => batch.AddRange(new[] { "MATCH (a) RETURN a", "  " }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task AddRange_Queries_ExecutesAllStatements()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+        batch.AddRange(new[] { "MATCH (a) RETURN a", "MATCH (b) RETURN b" });
+
+        using var batchResult = await batch.ExecuteAsync();
+
+        await Assert.That(bridge.CallCount).IsEqualTo(2);
+        await Assert.That(batchResult.Results.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task AddRange_Tuples_AddsAllAndReturnsThis()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var statements = new[]
+        {
+            ("MATCH (a) RETURN a", (IReadOnlyDictionary<string, object?>?)null, Models.LoraDbQueryRequest.DefaultFormat),
+            ("MATCH (b) RETURN b", (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = 1 }, Models.LoraDbQueryRequest.DefaultFormat),
+        };
+
+        var batch = new LoraDbBatch(client);
+        var returned = batch.AddRange(statements);
+
+        await Assert.That(object.ReferenceEquals(batch, returned)).IsTrue();
+        await Assert.That(batch.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task AddRange_Tuples_NullEnumerable_ThrowsArgumentNullException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+
+        await Assert.That(() => batch.AddRange(
+                (IEnumerable<(string, IReadOnlyDictionary<string, object?>?, string)>)null!))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task AddRange_Tuples_PassesParametersCorrectly()
+    {
+        var capturedRequests = new List<string>();
+        var bridge = new FakeNativeBridge(responseFactory: req =>
+        {
+            capturedRequests.Add(req);
+            return """{"rows":[]}""";
+        });
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+        batch.AddRange(new[]
+        {
+            ("MATCH (n) WHERE n.id = $id RETURN n",
+             (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = "x1" },
+             Models.LoraDbQueryRequest.DefaultFormat),
+            ("MATCH (n) WHERE n.id = $id RETURN n",
+             (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = "x2" },
+             Models.LoraDbQueryRequest.DefaultFormat),
+        });
+
+        using var batchResult = await batch.ExecuteAsync();
+
+        await Assert.That(capturedRequests.Count).IsEqualTo(2);
+        using var doc1 = JsonDocument.Parse(capturedRequests[0]);
+        using var doc2 = JsonDocument.Parse(capturedRequests[1]);
+        await Assert.That(doc1.RootElement.GetProperty("params").GetProperty("id").GetString()).IsEqualTo("x1");
+        await Assert.That(doc2.RootElement.GetProperty("params").GetProperty("id").GetString()).IsEqualTo("x2");
+    }
+
     // ── Constructor guards ─────────────────────────────────────────────────────
 
     [Test]

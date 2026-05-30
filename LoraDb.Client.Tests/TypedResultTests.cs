@@ -291,6 +291,84 @@ public class TypedResultTests
         await Assert.That(rows[0].Name).IsEqualTo("Alice");
     }
 
+    [Test]
+    public async Task ExecuteRowsStreamAsync_ReturnsTypedRows()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"},{"name":"Bob"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var rows = new List<PersonRow>();
+        await foreach (var row in client.ExecuteRowsStreamAsync<PersonRow>("MATCH (n) RETURN n.name AS name"))
+            rows.Add(row);
+
+        await Assert.That(rows.Count).IsEqualTo(2);
+        await Assert.That(rows[0].Name).IsEqualTo("Alice");
+        await Assert.That(rows[1].Name).IsEqualTo("Bob");
+    }
+
+    [Test]
+    public async Task ExecuteRowsStreamAsync_WithTypeInfo_ReturnsTypedRows()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var rows = new List<PersonRow>();
+        await foreach (var row in client.ExecuteRowsStreamAsync("MATCH (n) RETURN n.name AS name", TypedResultJsonContext.Default.PersonRow))
+            rows.Add(row);
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        await Assert.That(rows[0].Name).IsEqualTo("Alice");
+    }
+
+    [Test]
+    public async Task ExecuteRowsStreamAsync_EmptyResult_YieldsNothing()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var rows = new List<PersonRow>();
+        await foreach (var row in client.ExecuteRowsStreamAsync<PersonRow>("MATCH (n) RETURN n.name AS name"))
+            rows.Add(row);
+
+        await Assert.That(rows.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ExecuteRowsStreamAsync_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in ((ILoraDbClient)null!).ExecuteRowsStreamAsync<PersonRow>("MATCH (n) RETURN n"))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task ExecuteRowsStreamAsync_CancellationDuringIteration_ThrowsOperationCanceled()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"},{"name":"Bob"},{"name":"Carol"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var cts = new CancellationTokenSource();
+        var rows = new List<PersonRow>();
+
+        await Assert.That(async () =>
+            {
+                await foreach (var row in client.ExecuteRowsStreamAsync<PersonRow>(
+                    "MATCH (n) RETURN n.name AS name", cancellationToken: cts.Token))
+                {
+                    rows.Add(row);
+                    cts.Cancel(); // cancel after first row
+                }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<OperationCanceledException>();
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+    }
+
     public sealed class PersonRow
     {
         [JsonPropertyName("name")]

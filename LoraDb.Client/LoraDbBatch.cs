@@ -58,6 +58,48 @@ public sealed class LoraDbBatch
     }
 
     /// <summary>
+    /// Appends multiple Cypher statements to the batch, using the default format for each.
+    /// </summary>
+    /// <param name="queries">The Cypher queries to add.</param>
+    /// <returns>This <see cref="LoraDbBatch"/> instance to allow fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="queries"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">Any query in <paramref name="queries"/> is null or whitespace.</exception>
+    public LoraDbBatch AddRange(IEnumerable<string> queries)
+    {
+        if (queries is null)
+            throw new ArgumentNullException(nameof(queries));
+
+        foreach (var query in queries)
+            Add(query);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Appends multiple Cypher statements (with optional parameters and format) to the batch.
+    /// </summary>
+    /// <param name="statements">
+    /// A sequence of <c>(query, parameters, format)</c> tuples.
+    /// <c>parameters</c> may be <c>null</c>; <c>format</c> defaults to the standard rows format
+    /// when omitted (pass <see cref="Models.LoraDbQueryRequest.DefaultFormat"/> or leave the tuple field as
+    /// <c>null</c>).
+    /// </param>
+    /// <returns>This <see cref="LoraDbBatch"/> instance to allow fluent chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="statements"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">Any query in <paramref name="statements"/> is null or whitespace.</exception>
+    public LoraDbBatch AddRange(
+        IEnumerable<(string query, IReadOnlyDictionary<string, object?>? parameters, string format)> statements)
+    {
+        if (statements is null)
+            throw new ArgumentNullException(nameof(statements));
+
+        foreach (var (query, parameters, format) in statements)
+            Add(query, parameters, format);
+
+        return this;
+    }
+
+    /// <summary>
     /// Executes all queued statements in order and returns a
     /// <see cref="LoraDbBatchResult"/> containing the individual results.
     /// </summary>

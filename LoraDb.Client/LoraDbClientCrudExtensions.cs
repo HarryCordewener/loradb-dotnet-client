@@ -40,7 +40,7 @@ public static class LoraDbClientCrudExtensions
     /// The database returned no rows. This indicates an unexpected database state because a
     /// <c>CREATE … RETURN n</c> query always returns the created node on success.
     /// </exception>
-    public static async Task<T> CreateNodeAsync<T>(
+    public static async ValueTask<T> CreateNodeAsync<T>(
         this ILoraDbClient client,
         string label,
         IReadOnlyDictionary<string, object?> properties,
@@ -68,7 +68,7 @@ public static class LoraDbClientCrudExtensions
     /// <remarks>
     /// Generated Cypher: <code>CREATE (n:Label) RETURN n</code>
     /// </remarks>
-    public static async Task<T> CreateNodeAsync<T>(
+    public static async ValueTask<T> CreateNodeAsync<T>(
         this ILoraDbClient client,
         string label,
         CancellationToken cancellationToken = default)
@@ -131,7 +131,7 @@ public static class LoraDbClientCrudExtensions
     /// Generated Cypher (with filters):
     /// <code>MATCH (n:Person {name: $filter_name}) RETURN n LIMIT 1</code>
     /// </remarks>
-    public static async Task<T?> FindNodeAsync<T>(
+    public static async ValueTask<T?> FindNodeAsync<T>(
         this ILoraDbClient client,
         string label,
         IReadOnlyDictionary<string, object?>? filters = null,
@@ -255,7 +255,7 @@ public static class LoraDbClientCrudExtensions
     /// The database returned no rows. This indicates an unexpected database state because a
     /// <c>MERGE … RETURN n</c> query always returns the node on success.
     /// </exception>
-    public static async Task<T> MergeNodeAsync<T>(
+    public static async ValueTask<T> MergeNodeAsync<T>(
         this ILoraDbClient client,
         string label,
         IReadOnlyDictionary<string, object?> mergeProperties,
