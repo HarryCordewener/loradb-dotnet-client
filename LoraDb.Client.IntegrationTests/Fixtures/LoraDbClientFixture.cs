@@ -1,6 +1,7 @@
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using LoraDb.Client.Native;
+using TUnit.Core;
 using TUnit.Core.Interfaces;
 
 namespace LoraDb.Client.IntegrationTests.Fixtures;
@@ -21,9 +22,9 @@ public sealed class EmbeddedClientFixture : ILoraDbClientFixture
 
         var ffiLibraryPath = IntegrationTestEnvironment.FfiLibraryPath;
         if (string.IsNullOrWhiteSpace(ffiLibraryPath))
-            throw new InvalidOperationException("Set LORADB_FFI_LIBRARY_PATH when LORADB_RUN_INTEGRATION_TESTS is enabled.");
-        if (!File.Exists(ffiLibraryPath))
-            throw new FileNotFoundException($"Native library not found: {ffiLibraryPath}", ffiLibraryPath);
+            Skip.Test("Set LORADB_FFI_LIBRARY_PATH when LORADB_RUN_INTEGRATION_TESTS is enabled.");
+        if (!File.Exists(ffiLibraryPath) || new FileInfo(ffiLibraryPath).Length == 0)
+            Skip.Test($"Native library not found or not populated: {ffiLibraryPath}");
 
         _ffiLibraryPath = ffiLibraryPath;
         return Task.CompletedTask;
@@ -52,7 +53,7 @@ public sealed class HttpClientFixture : ILoraDbClientFixture
 
         var image = IntegrationTestEnvironment.HttpImage;
         if (string.IsNullOrWhiteSpace(image))
-            throw new InvalidOperationException("Set LORADB_HTTP_IMAGE when LORADB_RUN_INTEGRATION_TESTS is enabled.");
+            Skip.Test("Set LORADB_HTTP_IMAGE when LORADB_RUN_INTEGRATION_TESTS is enabled.");
 
         _container = new ContainerBuilder(image)
             .WithPortBinding(4747, true)
