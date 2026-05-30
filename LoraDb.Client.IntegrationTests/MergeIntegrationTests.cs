@@ -63,7 +63,8 @@ public class MergeIntegrationTests : IntegrationTestBase
     {
         await WithCleanDatabaseAsync(fixture, async client =>
         {
-            using var createResult = await client.ExecuteAsync("MERGE (n:User {email: 'match@example.com'}) RETURN n.email AS email");
+            using var createResult = await client.ExecuteAsync(
+                "MERGE (n:User {email: 'match@example.com'}) ON CREATE SET n.updatedAt = 0 RETURN n.email AS email");
             using var matchResult = await client.ExecuteAsync(
                 "MERGE (n:User {email: 'match@example.com'}) ON MATCH SET n.updatedAt = 2 RETURN n.updatedAt AS updatedAt");
             await Assert.That(IntegrationAssertions.GetRowColumn(matchResult, 0, "updatedAt").GetInt32()).IsEqualTo(2);

@@ -16,7 +16,7 @@ public class ResultFormatIntegrationTests : IntegrationTestBase
     {
         await WithSocialGraphAsync(fixture, async client =>
         {
-            using var result = await client.ExecuteAsync("MATCH (n:Person) RETURN n.name AS name ORDER BY name", format: "rows");
+            using var result = await client.ExecuteAsync("MATCH (n:Person) RETURN n.name AS name ORDER BY n.name", format: "rows");
             await Assert.That(result.Root.TryGetProperty("rows", out _)).IsTrue();
             await AssertStringRowsAsync(result, "name", "Alice", "Bob", "Carol", "Dave");
         });
@@ -34,8 +34,8 @@ public class ResultFormatIntegrationTests : IntegrationTestBase
 
         await WithSocialGraphAsync(fixture, async client =>
         {
-            using var result = await client.ExecuteAsync("MATCH (n:Person) RETURN n.name AS name ORDER BY name", format: "rowArrays");
-            await Assert.That(result.Root.TryGetProperty("rowArrays", out _)).IsTrue();
+            using var result = await client.ExecuteAsync("MATCH (n:Person) RETURN n.name AS name ORDER BY n.name", format: "rowArrays");
+            await Assert.That(result.Root.TryGetProperty("columns", out _)).IsTrue();
             await AssertRowArrayStringsAsync(result.Root, "Alice", "Bob", "Carol", "Dave");
         });
     }
@@ -76,7 +76,7 @@ public class ResultFormatIntegrationTests : IntegrationTestBase
             using var result = await client.ExecuteAsync(
                 "MATCH (a:Person)-[r:FOLLOWS]->(b:Person) RETURN a.name AS source, r, b.name AS target",
                 format: "combined");
-            await Assert.That(result.Root.TryGetProperty("rows", out _)).IsTrue();
+            await Assert.That(result.Root.TryGetProperty("data", out _)).IsTrue();
             await Assert.That(result.Root.TryGetProperty("graph", out _)).IsTrue();
         });
     }

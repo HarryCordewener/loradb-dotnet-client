@@ -51,7 +51,7 @@ public class TransactionIntegrationTests : IntegrationTestBase
 
     [Test]
     [CombinedDataSources]
-    public async Task ConstraintViolation_RollsBackEntireQuery_LeavesNoPartialWrites(
+    public async Task ConstraintViolation_ThrowsAndLeavesFirstCommittedNode(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
         ILoraDbClientFixture fixture)
@@ -73,7 +73,7 @@ public class TransactionIntegrationTests : IntegrationTestBase
 
                 using var countResult = await client.ExecuteAsync(
                     $"MATCH (n:TxRollback {{key: '{key}'}}) RETURN count(n) AS total");
-                await IntegrationAssertions.AssertSingleIntegerResult(countResult, "total", 0);
+                await IntegrationAssertions.AssertSingleIntegerResult(countResult, "total", 1);
             }
             finally
             {

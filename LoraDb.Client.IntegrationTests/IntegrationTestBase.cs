@@ -65,7 +65,7 @@ public abstract class IntegrationTestBase
 
     protected static async Task AssertRowArrayStringsAsync(JsonElement root, params string[] expected)
     {
-        var rowArrays = root.GetProperty("rowArrays");
+        var rowArrays = root.GetProperty("rows");
         await Assert.That(rowArrays.GetArrayLength()).IsEqualTo(expected.Length);
 
         for (var index = 0; index < expected.Length; index++)
