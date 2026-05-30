@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: test (${{ matrix.os }})
+  unit:
+    name: unit (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -25,8 +25,8 @@ jobs:
         run: dotnet restore LoraDb.Client.slnx
       - name: Build
         run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
-      - name: Test
-        run: dotnet test LoraDb.Client.slnx --configuration Release --no-build -- --coverage --coverage-output-format cobertura
+      - name: Run unit tests
+        run: dotnet test LoraDb.Client.Tests/LoraDb.Client.Tests.csproj --configuration Release --no-build -- --coverage --coverage-output-format cobertura
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v6
