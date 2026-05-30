@@ -17,9 +17,8 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var request = new LoraDbQueryRequest
+        var request = new LoraDbQueryRequest(query)
         {
-            Query = query,
             Parameters = parameters,
             Format = format,
         };
@@ -34,6 +33,6 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
     public ValueTask DisposeAsync()
     {
         _nativeBridge.Dispose();
-        return ValueTask.CompletedTask;
+        return default;
     }
 }

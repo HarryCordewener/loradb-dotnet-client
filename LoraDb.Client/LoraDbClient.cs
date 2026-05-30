@@ -14,7 +14,8 @@ public sealed class LoraDbClient : ILoraDbClient
 
     public static LoraDbClient CreateHttp(Uri endpoint, HttpClient? httpClient = null)
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
+        if (endpoint is null)
+            throw new ArgumentNullException(nameof(endpoint));
         return new LoraDbClient(new HttpLoraDbTransport(endpoint, httpClient));
     }
 
@@ -25,8 +26,10 @@ public sealed class LoraDbClient : ILoraDbClient
     /// </summary>
     public static LoraDbClient CreateHttp(Uri endpoint, IHttpClientFactory httpClientFactory, string clientName = nameof(LoraDbClient))
     {
-        ArgumentNullException.ThrowIfNull(endpoint);
-        ArgumentNullException.ThrowIfNull(httpClientFactory);
+        if (endpoint is null)
+            throw new ArgumentNullException(nameof(endpoint));
+        if (httpClientFactory is null)
+            throw new ArgumentNullException(nameof(httpClientFactory));
         return new LoraDbClient(new HttpLoraDbTransport(endpoint, httpClientFactory, clientName));
     }
 

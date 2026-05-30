@@ -11,8 +11,10 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         Action<LoraDbClientOptions> configure)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configure);
+        if (services is null)
+            throw new ArgumentNullException(nameof(services));
+        if (configure is null)
+            throw new ArgumentNullException(nameof(configure));
 
         services.Configure(configure);
         RegisterClient(services);
@@ -23,8 +25,10 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        if (services is null)
+            throw new ArgumentNullException(nameof(services));
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(connectionString));
 
         var parsed = LoraDbClientOptions.FromConnectionString(connectionString);
         services.Configure<LoraDbClientOptions>(o =>
@@ -42,8 +46,10 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         LoraDbClientOptions options)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(options);
+        if (services is null)
+            throw new ArgumentNullException(nameof(services));
+        if (options is null)
+            throw new ArgumentNullException(nameof(options));
 
         services.Configure<LoraDbClientOptions>(o =>
         {

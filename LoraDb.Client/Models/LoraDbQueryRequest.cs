@@ -6,13 +6,18 @@ public sealed class LoraDbQueryRequest
 {
     public const string DefaultFormat = "rows";
 
+    public LoraDbQueryRequest(string query)
+    {
+        Query = query ?? throw new ArgumentNullException(nameof(query));
+    }
+
     [JsonPropertyName("query")]
-    public required string Query { get; init; }
+    public string Query { get; set; }
 
     [JsonPropertyName("params")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IReadOnlyDictionary<string, object?>? Parameters { get; init; }
+    public IReadOnlyDictionary<string, object?>? Parameters { get; set; }
 
     [JsonPropertyName("format")]
-    public string Format { get; init; } = DefaultFormat;
+    public string Format { get; set; } = DefaultFormat;
 }
