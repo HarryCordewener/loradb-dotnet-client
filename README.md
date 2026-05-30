@@ -47,7 +47,7 @@ dotnet test LoraDb.Client.slnx
 Integration tests exercise real HTTP and Embedded modes:
 
 - `LORADB_RUN_INTEGRATION_TESTS=1`
-- `LORADB_HTTP_IMAGE=<loradb-server-image>`
+- `LORADB_HTTP_IMAGE=<loradb-server-image>` *(optional — defaults to `ghcr.io/lora-db/lora-server:latest`)*
 - `LORADB_FFI_LIBRARY_PATH=<absolute-path-to-lora_ffi-binary>`
 
 ```bash

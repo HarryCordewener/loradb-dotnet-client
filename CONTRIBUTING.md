@@ -15,7 +15,7 @@ Thank you for considering contributing! Please follow these guidelines.
 Integration tests exercise real HTTP and Embedded modes.
 
 - Set `LORADB_RUN_INTEGRATION_TESTS=1`.
-- Set `LORADB_HTTP_IMAGE` to a LoraDB server container image for HTTP mode testing.
+- Optionally set `LORADB_HTTP_IMAGE` to override the default LoraDB server container image (`ghcr.io/lora-db/lora-server:latest`) for HTTP mode testing.
 - Set `LORADB_FFI_LIBRARY_PATH` to a real `lora_ffi` binary path for Embedded mode testing.
 
 Run them with:
@@ -24,7 +24,7 @@ Run them with:
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
 ```
 
-To run HTTP integration tests in GitHub Actions, set this repository variable:
+To run HTTP integration tests in GitHub Actions, optionally set this repository variable to override the default (`ghcr.io/lora-db/lora-server:latest`):
 
 - `LORADB_HTTP_IMAGE=<loradb-server-image>`
 

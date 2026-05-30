@@ -53,8 +53,6 @@ public sealed class HttpClientFixture : ILoraDbClientFixture
             return;
 
         var image = IntegrationTestEnvironment.HttpImage;
-        if (string.IsNullOrWhiteSpace(image))
-            Skip.Test("Set LORADB_HTTP_IMAGE when LORADB_RUN_INTEGRATION_TESTS is enabled.");
 
         _container = new ContainerBuilder(image)
             .WithPortBinding(4747, true)

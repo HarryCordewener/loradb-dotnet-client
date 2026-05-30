@@ -37,10 +37,8 @@ jobs:
   integration:
     name: integration (http + ffi)
     runs-on: ubuntu-latest
-    if: ${{ vars.LORADB_HTTP_IMAGE != '' }}
     env:
       LORADB_RUN_INTEGRATION_TESTS: "1"
-      LORADB_HTTP_IMAGE: ${{ vars.LORADB_HTTP_IMAGE }}
       LORADB_FFI_LIBRARY_PATH: ${{ github.workspace }}/LoraDb.Client.Native/runtimes/linux-x64/native/liblora_ffi.so
     steps:
       - uses: actions/checkout@v4
