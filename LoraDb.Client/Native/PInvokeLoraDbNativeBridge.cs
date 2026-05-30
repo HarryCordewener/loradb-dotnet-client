@@ -51,7 +51,7 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
         var root = doc.RootElement;
 
         var query = root.TryGetProperty("query", out var qProp) && qProp.ValueKind == JsonValueKind.String
-            ? qProp.GetString()!
+            ? qProp.GetString() ?? throw new ArgumentException("requestJson 'query' field must not be null.")
             : throw new ArgumentException("requestJson must contain a 'query' string field.");
 
         string? paramsJson = null;
