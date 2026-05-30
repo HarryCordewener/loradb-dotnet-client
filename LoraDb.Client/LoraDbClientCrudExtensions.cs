@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace LoraDb.Client;
 
@@ -51,7 +52,7 @@ public static class LoraDbClientCrudExtensions
         if (properties is null) throw new ArgumentNullException(nameof(properties));
         if (properties.Count == 0) throw new ArgumentException("At least one property is required.", nameof(properties));
 
-        var (propMap, parameters) = BuildPropertyMap(properties, "create");
+        var (propMap, parameters) = BuildPropertyMap(properties, "create", nameof(properties));
         var query = $"CREATE (n:{label} {propMap}) RETURN n";
 
         using var result = await client.ExecuteAsync(query, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -110,7 +111,7 @@ public static class LoraDbClientCrudExtensions
 
         if (filters is { Count: > 0 })
         {
-            var (propMap, p) = BuildPropertyMap(filters, "filter");
+            var (propMap, p) = BuildPropertyMap(filters, "filter", nameof(filters));
             query = $"MATCH (n:{label} {propMap}) RETURN n";
             parameters = p;
         }
@@ -144,7 +145,7 @@ public static class LoraDbClientCrudExtensions
 
         if (filters is { Count: > 0 })
         {
-            var (propMap, p) = BuildPropertyMap(filters, "filter");
+            var (propMap, p) = BuildPropertyMap(filters, "filter", nameof(filters));
             query = $"MATCH (n:{label} {propMap}) RETURN n LIMIT 1";
             parameters = p;
         }
@@ -184,8 +185,8 @@ public static class LoraDbClientCrudExtensions
         if (properties is null) throw new ArgumentNullException(nameof(properties));
         if (properties.Count == 0) throw new ArgumentException("At least one property to set is required.", nameof(properties));
 
-        var (matchMap, matchParams) = BuildPropertyMap(match, "match");
-        var (setClause, setParams) = BuildSetClause(properties, "n", "set");
+        var (matchMap, matchParams) = BuildPropertyMap(match, "match", nameof(match));
+        var (setClause, setParams) = BuildSetClause(properties, "n", "set", nameof(properties));
 
         var allParams = new Dictionary<string, object?>(matchParams.Count + setParams.Count);
         foreach (var kv in matchParams) allParams[kv.Key] = kv.Value;
@@ -225,7 +226,7 @@ public static class LoraDbClientCrudExtensions
 
         if (match is { Count: > 0 })
         {
-            var (matchMap, p) = BuildPropertyMap(match, "match");
+            var (matchMap, p) = BuildPropertyMap(match, "match", nameof(match));
             query = $"MATCH (n:{label} {matchMap}) {deleteKeyword} n";
             parameters = p;
         }
@@ -264,7 +265,7 @@ public static class LoraDbClientCrudExtensions
         if (mergeProperties is null) throw new ArgumentNullException(nameof(mergeProperties));
         if (mergeProperties.Count == 0) throw new ArgumentException("At least one merge property is required.", nameof(mergeProperties));
 
-        var (propMap, parameters) = BuildPropertyMap(mergeProperties, "merge");
+        var (propMap, parameters) = BuildPropertyMap(mergeProperties, "merge", nameof(mergeProperties));
         var query = $"MERGE (n:{label} {propMap}) RETURN n";
 
         using var result = await client.ExecuteAsync(query, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -289,10 +290,32 @@ public static class LoraDbClientCrudExtensions
 
     // ── Private helpers ────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Matches valid Cypher identifiers: start with a letter or underscore, followed by
+    /// letters, digits, or underscores. This pattern is enforced for labels and property
+    /// keys that are interpolated directly into generated Cypher.
+    /// </summary>
+    private static readonly Regex ValidIdentifier =
+        new(@"^[a-zA-Z_][a-zA-Z0-9_]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private static void ValidateLabel(string label)
     {
         if (string.IsNullOrWhiteSpace(label))
             throw new ArgumentException("Label cannot be null or whitespace.", nameof(label));
+        if (!ValidIdentifier.IsMatch(label))
+            throw new ArgumentException(
+                $"Label '{label}' is not a valid Cypher identifier. Use letters, digits, and underscores only, starting with a letter or underscore.",
+                nameof(label));
+    }
+
+    private static void ValidatePropertyKey(string key, string paramName)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("Property key cannot be null or whitespace.", paramName);
+        if (!ValidIdentifier.IsMatch(key))
+            throw new ArgumentException(
+                $"Property key '{key}' is not a valid Cypher identifier. Use letters, digits, and underscores only, starting with a letter or underscore.",
+                paramName);
     }
 
     /// <summary>
@@ -300,15 +323,16 @@ public static class LoraDbClientCrudExtensions
     /// corresponding parameter dictionary.
     /// </summary>
     private static (string propertyMap, Dictionary<string, object?> parameters) BuildPropertyMap(
-        IReadOnlyDictionary<string, object?> properties, string prefix)
+        IReadOnlyDictionary<string, object?> properties, string prefix, string paramName)
     {
         var parts = new List<string>(properties.Count);
         var parameters = new Dictionary<string, object?>(properties.Count);
         foreach (var (key, value) in properties)
         {
-            var paramName = $"{prefix}_{key}";
-            parts.Add($"{key}: ${paramName}");
-            parameters[paramName] = value;
+            ValidatePropertyKey(key, paramName);
+            var pName = $"{prefix}_{key}";
+            parts.Add($"{key}: ${pName}");
+            parameters[pName] = value;
         }
         return ($"{{{string.Join(", ", parts)}}}", parameters);
     }
@@ -318,18 +342,19 @@ public static class LoraDbClientCrudExtensions
     /// corresponding parameter dictionary.
     /// </summary>
     private static (string setClause, Dictionary<string, object?> parameters) BuildSetClause(
-        IReadOnlyDictionary<string, object?> properties, string nodeAlias, string prefix)
+        IReadOnlyDictionary<string, object?> properties, string nodeAlias, string prefix, string paramName)
     {
         var sb = new StringBuilder();
         var parameters = new Dictionary<string, object?>(properties.Count);
         var first = true;
         foreach (var (key, value) in properties)
         {
+            ValidatePropertyKey(key, paramName);
             if (!first) sb.Append(", ");
             first = false;
-            var paramName = $"{prefix}_{key}";
-            sb.Append($"{nodeAlias}.{key} = ${paramName}");
-            parameters[paramName] = value;
+            var pName = $"{prefix}_{key}";
+            sb.Append($"{nodeAlias}.{key} = ${pName}");
+            parameters[pName] = value;
         }
         return (sb.ToString(), parameters);
     }

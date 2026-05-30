@@ -42,18 +42,20 @@ public sealed class LoraDbBatch
     /// </summary>
     /// <param name="query">The Cypher query to execute.</param>
     /// <param name="parameters">Optional query parameters.</param>
-    /// <param name="format">Response format (default: <c>"rows"</c>).</param>
+    /// <param name="format">
+    /// Response format. When <c>null</c> or omitted the default format (<c>"rows"</c>) is used.
+    /// </param>
     /// <returns>This <see cref="LoraDbBatch"/> instance to allow fluent chaining.</returns>
     /// <exception cref="ArgumentException"><paramref name="query"/> is null or whitespace.</exception>
     public LoraDbBatch Add(
         string query,
         IReadOnlyDictionary<string, object?>? parameters = null,
-        string format = Models.LoraDbQueryRequest.DefaultFormat)
+        string? format = null)
     {
         if (string.IsNullOrWhiteSpace(query))
             throw new ArgumentException("Query cannot be null or whitespace.", nameof(query));
 
-        _statements.Add((query, parameters, format));
+        _statements.Add((query, parameters, format ?? Models.LoraDbQueryRequest.DefaultFormat));
         return this;
     }
 
@@ -81,14 +83,14 @@ public sealed class LoraDbBatch
     /// <param name="statements">
     /// A sequence of <c>(query, parameters, format)</c> tuples.
     /// <c>parameters</c> may be <c>null</c>; <c>format</c> defaults to the standard rows format
-    /// when omitted (pass <see cref="Models.LoraDbQueryRequest.DefaultFormat"/> or leave the tuple field as
-    /// <c>null</c>).
+    /// when <c>null</c> or omitted (pass <see cref="Models.LoraDbQueryRequest.DefaultFormat"/> or leave the
+    /// tuple field as <c>null</c>).
     /// </param>
     /// <returns>This <see cref="LoraDbBatch"/> instance to allow fluent chaining.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="statements"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">Any query in <paramref name="statements"/> is null or whitespace.</exception>
     public LoraDbBatch AddRange(
-        IEnumerable<(string query, IReadOnlyDictionary<string, object?>? parameters, string format)> statements)
+        IEnumerable<(string query, IReadOnlyDictionary<string, object?>? parameters, string? format)> statements)
     {
         if (statements is null)
             throw new ArgumentNullException(nameof(statements));

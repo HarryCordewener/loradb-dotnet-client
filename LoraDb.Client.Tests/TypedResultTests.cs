@@ -373,6 +373,127 @@ public class TypedResultTests
         await Assert.That(rows.Count).IsEqualTo(1);
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // ExecuteRowsAsync — null-guard and parameter coverage
+    // ──────────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task ExecuteRowsAsync_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in ((ILoraDbClient)null!).ExecuteRowsAsync<PersonRow>("MATCH (n) RETURN n"))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task ExecuteRowsAsync_WithParameters_PassesParametersToQuery()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var rows = new List<PersonRow>();
+        await foreach (var row in client.ExecuteRowsAsync<PersonRow>(
+            "MATCH (n) WHERE n.name = $name RETURN n.name AS name",
+            new Dictionary<string, object?> { ["name"] = "Alice" }))
+            rows.Add(row);
+
+        await Assert.That(rows.Count).IsEqualTo(1);
+        using var doc = JsonDocument.Parse(bridge.LastRequestJson!);
+        await Assert.That(doc.RootElement.GetProperty("params").GetProperty("name").GetString())
+            .IsEqualTo("Alice");
+    }
+
+    [Test]
+    public async Task ExecuteRowsAsync_WithTypeInfo_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in ((ILoraDbClient)null!).ExecuteRowsAsync(
+                    "MATCH (n) RETURN n.name AS name",
+                    TypedResultJsonContext.Default.PersonRow))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task ExecuteRowsAsync_WithTypeInfo_NullTypeInfo_ThrowsArgumentNullException()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.ExecuteRowsAsync(
+                    "MATCH (n) RETURN n.name AS name",
+                    (System.Text.Json.Serialization.Metadata.JsonTypeInfo<PersonRow>)null!))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ReadArray (via ReadRows TypeInfo overload) — null element handling
+    // ──────────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task ReadRows_WithTypeInfo_NullElementInArray_PreservesNull()
+    {
+        // A null element in the rows array should be preserved (not throw) for reference types.
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"},null,{"name":"Carol"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var result = await client.ExecuteAsync("MATCH (n) RETURN n.name AS name");
+        var rows = result.ReadRows(TypedResultJsonContext.Default.PersonRow);
+
+        await Assert.That(rows.Count).IsEqualTo(3);
+        await Assert.That(rows[0]).IsNotNull();
+        await Assert.That(rows[0]!.Name).IsEqualTo("Alice");
+        await Assert.That(rows[1]).IsNull();
+        await Assert.That(rows[2]).IsNotNull();
+        await Assert.That(rows[2]!.Name).IsEqualTo("Carol");
+    }
+
+    [Test]
+    public async Task ReadRowArrays_WithTypeInfo_NullStringElement_PreservesNull()
+    {
+        // Null cells inside a row array should be preserved for reference types (e.g. string).
+        var handler = RecordingHttpHandler.WithJson("""{"columns":["a","b"],"rows":[[null,"x"],["y",null]]}""");
+        await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
+
+        using var result = await client.ExecuteAsync("RETURN 1", format: "rowArrays");
+        var rowArrays = result.ReadRowArrays(TypedResultJsonContext.Default.String);
+
+        await Assert.That(rowArrays.Rows[0][0]).IsNull();
+        await Assert.That(rowArrays.Rows[0][1]).IsEqualTo("x");
+        await Assert.That(rowArrays.Rows[1][0]).IsEqualTo("y");
+        await Assert.That(rowArrays.Rows[1][1]).IsNull();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ReadRows TypeInfo — null typeInfo guard
+    // ──────────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task ReadRows_WithTypeInfo_NullTypeInfo_ThrowsArgumentNullException()
+    {
+        var bridge = new FakeNativeBridge("""{"rows":[{"name":"Alice"}]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var result = await client.ExecuteAsync("MATCH (n) RETURN n.name AS name");
+
+        await Assert.That(() => result.ReadRows((System.Text.Json.Serialization.Metadata.JsonTypeInfo<PersonRow>)null!))
+            .ThrowsException()
+            .And
+            .IsTypeOf<ArgumentNullException>();
+    }
+
     public sealed class PersonRow
     {
         [JsonPropertyName("name")]
@@ -406,4 +527,5 @@ public class TypedResultTests
 [JsonSerializable(typeof(TypedResultTests.GraphRelationship))]
 [JsonSerializable(typeof(TypedResultTests.CombinedData))]
 [JsonSerializable(typeof(int))]
+[JsonSerializable(typeof(string))]
 internal partial class TypedResultJsonContext : JsonSerializerContext;

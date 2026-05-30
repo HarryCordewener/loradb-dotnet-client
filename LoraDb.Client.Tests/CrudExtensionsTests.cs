@@ -115,6 +115,86 @@ public class CrudExtensionsTests
             .And.IsTypeOf<ArgumentNullException>();
     }
 
+    [Test]
+    public async Task CreateNode_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.CreateNodeAsync<NodeRow>(
+                "Person) RETURN n //", new Dictionary<string, object?> { ["k"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task CreateNode_InvalidPropertyKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.CreateNodeAsync<NodeRow>(
+                "Person", new Dictionary<string, object?> { ["k}) RETURN 1 //"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    // ── CreateNodeAsync (no properties) — additional coverage ─────────────────
+
+    [Test]
+    public async Task CreateNode_WithoutProperties_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () => await ((ILoraDbClient)null!).CreateNodeAsync<NodeRow>("Label"))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task CreateNode_WithoutProperties_EmptyLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.CreateNodeAsync<NodeRow>("  "))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task CreateNode_WithoutProperties_ReturnsDeserializedRow()
+    {
+        var bridge = NodeBridge(10, "Empty", "{}");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var row = await client.CreateNodeAsync<NodeRow>("Empty");
+
+        await Assert.That(row.N.Id).IsEqualTo(10);
+        await Assert.That(row.N.Labels[0]).IsEqualTo("Empty");
+    }
+
+    [Test]
+    public async Task CreateNode_WithoutProperties_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.CreateNodeAsync<NodeRow>("Bad Label!"))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task CreateNode_NoRowsReturned_ThrowsInvalidOperationException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.CreateNodeAsync<NodeRow>("Ghost",
+                new Dictionary<string, object?> { ["k"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<InvalidOperationException>();
+    }
+
     // ── FindNodesAsync ─────────────────────────────────────────────────────────
 
     [Test]
@@ -380,6 +460,37 @@ public class CrudExtensionsTests
         await Assert.That(prms.GetProperty("match_id").GetInt32()).IsEqualTo(42);
     }
 
+    [Test]
+    public async Task DeleteNodes_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () => await ((ILoraDbClient)null!).DeleteNodesAsync("P"))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task DeleteNodes_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.DeleteNodesAsync("123BadLabel"))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task DeleteNodes_InvalidMatchKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.DeleteNodesAsync("P",
+                new Dictionary<string, object?> { ["id) DELETE ALL //"] = 1 }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
     // ── MergeNodeAsync ─────────────────────────────────────────────────────────
 
     [Test]
@@ -433,6 +544,200 @@ public class CrudExtensionsTests
             new Dictionary<string, object?> { ["email"] = "x@x.com" });
 
         await Assert.That(row.N.Id).IsEqualTo(5);
+    }
+
+    [Test]
+    public async Task MergeNode_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () => await ((ILoraDbClient)null!).MergeNodeAsync<NodeRow>(
+                "Tag", new Dictionary<string, object?> { ["k"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task MergeNode_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.MergeNodeAsync<NodeRow>(
+                "User) RETURN 1 //", new Dictionary<string, object?> { ["k"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task MergeNode_InvalidPropertyKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.MergeNodeAsync<NodeRow>(
+                "Tag", new Dictionary<string, object?> { ["k} RETURN 1 //"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task MergeNode_NoRowsReturned_ThrowsInvalidOperationException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.MergeNodeAsync<NodeRow>(
+                "Tag", new Dictionary<string, object?> { ["k"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<InvalidOperationException>();
+    }
+
+    // ── FindNodesAsync — additional injection/null coverage ────────────────────
+
+    [Test]
+    public async Task FindNodes_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in ((ILoraDbClient)null!).FindNodesAsync<NodeRow>("Tag"))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task FindNodes_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.FindNodesAsync<NodeRow>("Tag) RETURN 1 //"))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task FindNodes_InvalidFilterKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.FindNodesAsync<NodeRow>("Tag",
+                    new Dictionary<string, object?> { ["k}) RETURN 1 //"] = "v" }))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    // ── FindNodeAsync — additional injection/null coverage ─────────────────────
+
+    [Test]
+    public async Task FindNode_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () => await ((ILoraDbClient)null!).FindNodeAsync<NodeRow>("Tag"))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task FindNode_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.FindNodeAsync<NodeRow>("Tag) RETURN 1 //"))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task FindNode_InvalidFilterKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.FindNodeAsync<NodeRow>("Tag",
+                new Dictionary<string, object?> { ["k}) RETURN 1 //"] = "v" }))
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    // ── UpdateNodesAsync — additional injection/null coverage ──────────────────
+
+    [Test]
+    public async Task UpdateNodes_NullClient_ThrowsArgumentNullException()
+    {
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in ((ILoraDbClient)null!).UpdateNodesAsync<NodeRow>(
+                    "U",
+                    new Dictionary<string, object?> { ["id"] = 1 },
+                    new Dictionary<string, object?> { ["x"] = 2 }))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task UpdateNodes_InvalidLabel_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.UpdateNodesAsync<NodeRow>(
+                    "U) RETURN 1 //",
+                    new Dictionary<string, object?> { ["id"] = 1 },
+                    new Dictionary<string, object?> { ["x"] = 2 }))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task UpdateNodes_InvalidMatchKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.UpdateNodesAsync<NodeRow>(
+                    "U",
+                    new Dictionary<string, object?> { ["id}) RETURN 1 //"] = 1 },
+                    new Dictionary<string, object?> { ["x"] = 2 }))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
+    }
+
+    [Test]
+    public async Task UpdateNodes_InvalidSetKey_ThrowsArgumentException()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () =>
+            {
+                await foreach (var _ in client.UpdateNodesAsync<NodeRow>(
+                    "U",
+                    new Dictionary<string, object?> { ["id"] = 1 },
+                    new Dictionary<string, object?> { ["x}) SET n.y = 1 //"] = 2 }))
+                { }
+            })
+            .ThrowsException()
+            .And.IsTypeOf<ArgumentException>();
     }
 
     // ── CreateBatch ────────────────────────────────────────────────────────────

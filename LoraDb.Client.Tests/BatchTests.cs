@@ -312,8 +312,8 @@ public class BatchTests
 
         var statements = new[]
         {
-            ("MATCH (a) RETURN a", (IReadOnlyDictionary<string, object?>?)null, Models.LoraDbQueryRequest.DefaultFormat),
-            ("MATCH (b) RETURN b", (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = 1 }, Models.LoraDbQueryRequest.DefaultFormat),
+            ("MATCH (a) RETURN a", (IReadOnlyDictionary<string, object?>?)null, (string?)Models.LoraDbQueryRequest.DefaultFormat),
+            ("MATCH (b) RETURN b", (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = 1 }, (string?)Models.LoraDbQueryRequest.DefaultFormat),
         };
 
         var batch = new LoraDbBatch(client);
@@ -332,7 +332,7 @@ public class BatchTests
         var batch = new LoraDbBatch(client);
 
         await Assert.That(() => batch.AddRange(
-                (IEnumerable<(string, IReadOnlyDictionary<string, object?>?, string)>)null!))
+                (IEnumerable<(string, IReadOnlyDictionary<string, object?>?, string?)>)null!))
             .ThrowsException()
             .And.IsTypeOf<ArgumentNullException>();
     }
@@ -353,10 +353,10 @@ public class BatchTests
         {
             ("MATCH (n) WHERE n.id = $id RETURN n",
              (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = "x1" },
-             Models.LoraDbQueryRequest.DefaultFormat),
+             (string?)Models.LoraDbQueryRequest.DefaultFormat),
             ("MATCH (n) WHERE n.id = $id RETURN n",
              (IReadOnlyDictionary<string, object?>?)new Dictionary<string, object?> { ["id"] = "x2" },
-             Models.LoraDbQueryRequest.DefaultFormat),
+             (string?)Models.LoraDbQueryRequest.DefaultFormat),
         });
 
         using var batchResult = await batch.ExecuteAsync();
@@ -376,5 +376,52 @@ public class BatchTests
         await Assert.That(() => new LoraDbBatch(null!))
             .ThrowsException()
             .And.IsTypeOf<ArgumentNullException>();
+    }
+
+    // ── Null format coalescing ─────────────────────────────────────────────────
+
+    [Test]
+    public async Task Add_NullFormat_CoalescesToDefaultFormat()
+    {
+        var capturedRequests = new List<string>();
+        var bridge = new FakeNativeBridge(responseFactory: req =>
+        {
+            capturedRequests.Add(req);
+            return """{"rows":[]}""";
+        });
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+        batch.Add("MATCH (n) RETURN n", format: null);
+        using var batchResult = await batch.ExecuteAsync();
+
+        await Assert.That(capturedRequests.Count).IsEqualTo(1);
+        using var doc = JsonDocument.Parse(capturedRequests[0]);
+        await Assert.That(doc.RootElement.GetProperty("format").GetString())
+            .IsEqualTo(Models.LoraDbQueryRequest.DefaultFormat);
+    }
+
+    [Test]
+    public async Task AddRange_Tuples_NullFormat_CoalescesToDefaultFormat()
+    {
+        var capturedRequests = new List<string>();
+        var bridge = new FakeNativeBridge(responseFactory: req =>
+        {
+            capturedRequests.Add(req);
+            return """{"rows":[]}""";
+        });
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client);
+        batch.AddRange(new[]
+        {
+            ("MATCH (n) RETURN n", (IReadOnlyDictionary<string, object?>?)null, (string?)null),
+        });
+        using var batchResult = await batch.ExecuteAsync();
+
+        await Assert.That(capturedRequests.Count).IsEqualTo(1);
+        using var doc = JsonDocument.Parse(capturedRequests[0]);
+        await Assert.That(doc.RootElement.GetProperty("format").GetString())
+            .IsEqualTo(Models.LoraDbQueryRequest.DefaultFormat);
     }
 }

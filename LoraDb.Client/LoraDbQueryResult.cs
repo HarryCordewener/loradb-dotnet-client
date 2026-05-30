@@ -140,10 +140,10 @@ public sealed class LoraDbQueryResult : IDisposable
                 throw new InvalidOperationException($"Result payload '{context}' could not be deserialized to {typeof(T).Name}.", ex);
             }
 
-            if (value is null)
-                throw new InvalidOperationException($"Result payload '{context}' contains a null element.");
-
-            values.Add(value);
+            // Null JSON elements are preserved for reference types and Nullable<T>.
+            // Non-nullable value types will have thrown a JsonException above when the database
+            // returns a null cell, which is re-thrown as InvalidOperationException.
+            values.Add(value!);
         }
 
         return values;
