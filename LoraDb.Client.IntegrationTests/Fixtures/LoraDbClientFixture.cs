@@ -23,7 +23,8 @@ public sealed class EmbeddedClientFixture : ILoraDbClientFixture
         var ffiLibraryPath = IntegrationTestEnvironment.FfiLibraryPath;
         if (string.IsNullOrWhiteSpace(ffiLibraryPath))
             Skip.Test("Set LORADB_FFI_LIBRARY_PATH when LORADB_RUN_INTEGRATION_TESTS is enabled.");
-        if (!File.Exists(ffiLibraryPath) || new FileInfo(ffiLibraryPath).Length == 0)
+        var libraryInfo = new FileInfo(ffiLibraryPath);
+        if (!libraryInfo.Exists || libraryInfo.Length == 0)
             Skip.Test($"Native library not found or not populated: {ffiLibraryPath}");
 
         _ffiLibraryPath = ffiLibraryPath;
