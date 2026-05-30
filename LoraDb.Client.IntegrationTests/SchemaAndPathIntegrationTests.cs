@@ -53,13 +53,18 @@ public class SchemaAndPathIntegrationTests : IntegrationTestBase
 
                 await client.ExecuteAsync("CREATE (:Person {name: 'Alice'})");
 
-                await Assert.That(async () =>
+                var exception = (await Assert.That(async () =>
                         await client.ExecuteAsync("MATCH (p:Person {name: 'Alice'}) REMOVE p.name"))
-                    .ThrowsException();
+                    .ThrowsException())!;
+                await Assert.That(exception.Message).IsNotEmpty();
 
                 using var show = await client.ExecuteAsync(
                     $"SHOW CONSTRAINTS YIELD name WHERE name = '{constraintName}' RETURN count(name) AS total");
                 await IntegrationAssertions.AssertSingleIntegerResult(show, "total", 1);
+
+                using var nodeStillValid = await client.ExecuteAsync(
+                    "MATCH (p:Person {name: 'Alice'}) RETURN count(p) AS total");
+                await IntegrationAssertions.AssertSingleIntegerResult(nodeStillValid, "total", 1);
             }
             finally
             {
