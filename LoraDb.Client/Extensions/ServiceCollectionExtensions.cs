@@ -36,6 +36,7 @@ public static class ServiceCollectionExtensions
             o.Mode = parsed.Mode;
             o.Endpoint = parsed.Endpoint;
             o.NativeLibraryName = parsed.NativeLibraryName;
+            o.SerializerOptions = parsed.SerializerOptions;
         });
 
         RegisterClient(services);
@@ -56,6 +57,7 @@ public static class ServiceCollectionExtensions
             o.Mode = options.Mode;
             o.Endpoint = options.Endpoint;
             o.NativeLibraryName = options.NativeLibraryName;
+            o.SerializerOptions = options.SerializerOptions;
         });
 
         RegisterClient(services);
@@ -73,7 +75,8 @@ public static class ServiceCollectionExtensions
             return options.Mode switch
             {
                 LoraDbClientMode.Embedded => LoraDbClient.CreateEmbedded(
-                    new PInvokeLoraDbNativeBridge(options.NativeLibraryName)),
+                    new PInvokeLoraDbNativeBridge(options.NativeLibraryName),
+                    options.SerializerOptions),
                 _ => CreateHttpClient(sp, options),
             };
         });
@@ -89,6 +92,6 @@ public static class ServiceCollectionExtensions
         }
 
         var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-        return LoraDbClient.CreateHttp(options.Endpoint, httpClientFactory);
+        return LoraDbClient.CreateHttp(options.Endpoint, httpClientFactory, serializerOptions: options.SerializerOptions);
     }
 }

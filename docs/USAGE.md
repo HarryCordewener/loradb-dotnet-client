@@ -37,9 +37,21 @@ await using var client = LoraDbClient.CreateEmbedded();
 ## 2) Execute queries
 
 ```csharp
-using var result = await client.ExecuteAsync(
-    "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
-    new Dictionary<string, object?> { ["name"] = "Alice" });
+UserNameRow? first = null;
+await foreach (var row in client.ExecuteRowsAsync<UserNameRow>(
+                   "MATCH (u:User) WHERE u.name = $name RETURN u.name AS name",
+                   new Dictionary<string, object?> { ["name"] = "Alice" }))
+{
+    first = row;
+    break;
+}
+
+var name = first?.Name;
+
+public sealed class UserNameRow
+{
+    public string Name { get; init; } = string.Empty;
+}
 ```
 
 - `query`: required Cypher query string
@@ -52,20 +64,34 @@ Avoid passing null/whitespace queries; they throw `ArgumentException`.
 
 ## 3) Read results
 
-`ExecuteAsync` returns `LoraDbQueryResult`, which wraps a `JsonDocument`.
+For most use cases, use typed readers:
 
 ```csharp
 using var result = await client.ExecuteAsync("MATCH (u:User) RETURN u.name AS name");
-
-var root = result.Root; // JsonElement
+var typedRows = result.ReadRows<UserNameRow>();
 ```
 
-Typical HTTP response payload shapes:
+Typed format readers:
 
-- `rows` / `rowArrays`: includes `columns` and `rows`
-- `combined`: includes `columns`, `data`, and `graph`
+- `ReadRows<T>()` and `ReadRowsEnvelope<T>()`
+- `ReadRowArrays<T>()`
+- `ReadGraph<TNode, TRelationship>()`
+- `ReadCombined<TData, TNode, TRelationship>()`
 
-Inspect `result.Root` according to the format your query uses.
+`ExecuteRowsAsync` streams `IAsyncEnumerable<T>` for `await foreach` consumption.
+
+`ExecuteAsync` still returns `LoraDbQueryResult` with `Root` for low-level/manual JSON access.
+
+For AOT/source-generated serialization, use overloads that accept `JsonTypeInfo<T>`, for example:
+
+- `result.ReadRows(MyJsonContext.Default.UserNameRow)`
+- `client.ExecuteRowsAsync(query, MyJsonContext.Default.UserNameRow)`
+
+You can provide custom `JsonSerializerOptions` when creating clients:
+
+- `LoraDbClient.CreateHttp(endpoint, httpClient, serializerOptions: options)`
+- `LoraDbClient.CreateEmbedded(serializerOptions: options)`
+- `services.AddLoraDb(options => options.SerializerOptions = customOptions)`
 
 ---
 
@@ -128,10 +154,122 @@ Required exported symbols in native library:
 - Always `using` query results to dispose the underlying `JsonDocument`.
 - HTTP mode throws on non-success HTTP responses.
 - Embedded mode throws `InvalidOperationException` on native execution failures.
+- Typed readers throw `InvalidOperationException` when the payload shape does not match the selected format reader.
 
 ---
 
-## 7) Testing with real LoraDB
+## 7) CRUD helper extensions
+
+`LoraDbClientCrudExtensions` provides structured helpers that build common Cypher
+queries automatically.  All methods accept a `label` string and a property
+dictionary, and return rows deserialized as `T`.
+
+> **Row shape note** – LoraDB wraps node data as
+> `{"n":{"id":…,"labels":[…],"properties":{…}}}`.  Define your DTO with a
+> property `n` (or use `[JsonPropertyName("n")]`) to map the node.
+
+```csharp
+public sealed class PersonNode
+{
+    [JsonPropertyName("n")]
+    public NodeData N { get; init; } = null!;
+}
+public sealed class NodeData
+{
+    [JsonPropertyName("id")] public int Id { get; init; }
+    [JsonPropertyName("labels")] public List<string> Labels { get; init; } = new();
+    [JsonPropertyName("properties")] public JsonElement Properties { get; init; }
+}
+```
+
+### Create
+
+```csharp
+// CREATE (n:Person {name: $create_name, age: $create_age}) RETURN n
+var row = await client.CreateNodeAsync<PersonNode>("Person",
+    new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 });
+
+// CREATE (n:Tag) RETURN n  (no inline properties)
+var empty = await client.CreateNodeAsync<PersonNode>("Tag");
+```
+
+### Read
+
+```csharp
+// MATCH (n:Person {name: $filter_name}) RETURN n
+await foreach (var person in client.FindNodesAsync<PersonNode>("Person",
+                   new Dictionary<string, object?> { ["name"] = "Alice" }))
+{
+    // process person
+}
+
+// MATCH (n:Person {id: $filter_id}) RETURN n LIMIT 1
+var one = await client.FindNodeAsync<PersonNode>("Person",
+    new Dictionary<string, object?> { ["id"] = 42 });
+// Returns null when no match exists.
+```
+
+### Update
+
+```csharp
+// MATCH (n:Person {id: $match_id}) SET n.age = $set_age RETURN n
+await foreach (var updated in client.UpdateNodesAsync<PersonNode>("Person",
+                   match: new Dictionary<string, object?> { ["id"] = 42 },
+                   properties: new Dictionary<string, object?> { ["age"] = 31 }))
+{
+    // process updated node
+}
+```
+
+### Delete
+
+```csharp
+// MATCH (n:Person {id: $match_id}) DETACH DELETE n
+await client.DeleteNodesAsync("Person",
+    match: new Dictionary<string, object?> { ["id"] = 42 });
+
+// MATCH (n:TempNode) DETACH DELETE n  (no filter = all nodes with label)
+await client.DeleteNodesAsync("TempNode");
+
+// Plain DELETE (no DETACH) — node must have no relationships
+await client.DeleteNodesAsync("Isolated", detach: false);
+```
+
+### Merge (upsert)
+
+```csharp
+// MERGE (n:User {email: $merge_email}) RETURN n
+var row = await client.MergeNodeAsync<PersonNode>("User",
+    new Dictionary<string, object?> { ["email"] = "alice@example.com" });
+```
+
+---
+
+## 8) Batch execution
+
+`LoraDbBatch` executes multiple Cypher statements sequentially against the same
+client.  LoraDB uses auto-commit semantics, so each statement is its own
+transaction.  The batch provides **fail-fast** behaviour: if one statement
+throws, the remaining statements are not executed.
+
+```csharp
+using var batchResult = await client.CreateBatch()
+    .Add("CREATE (:Person {name: $name})", new Dictionary<string, object?> { ["name"] = "Alice" })
+    .Add("CREATE (:Person {name: $name})", new Dictionary<string, object?> { ["name"] = "Bob" })
+    .Add("MATCH (n:Person) RETURN count(n) AS total")
+    .ExecuteAsync();
+
+// batchResult.Results[2] holds the count query result
+var total = batchResult.Results[2].Root.GetProperty("rows")[0].GetProperty("total").GetInt32();
+```
+
+- `LoraDbBatchResult` is `IDisposable` and disposes all contained
+  `LoraDbQueryResult` instances when you dispose it.
+- Use `using var` or call `Dispose()` explicitly.
+
+---
+
+## 9) Testing with real LoraDB
 
 To run integration tests in this repository:
 
