@@ -40,7 +40,7 @@ public sealed class LoraDbQueryResult : IDisposable
     {
         var columns = DeserializeElement<List<string>>(GetRequiredProperty("columns"), _serializerOptions, "columns");
         var rows = DeserializeElement<List<List<TValue>>>(GetRequiredProperty("rows"), _serializerOptions, "rows");
-        return new(columns, rows.Select(static row => (IReadOnlyList<TValue>)row).ToList());
+        return new(columns, rows.ConvertAll(static row => (IReadOnlyList<TValue>)row));
     }
 
     public LoraDbGraphResult<TNode, TRelationship> ReadGraph<TNode, TRelationship>()

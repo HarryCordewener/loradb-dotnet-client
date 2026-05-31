@@ -40,7 +40,11 @@ public sealed class LoraDbClientOptions
             if (key.Equals("Server", StringComparison.OrdinalIgnoreCase) ||
                 key.Equals("Endpoint", StringComparison.OrdinalIgnoreCase))
             {
-                options.Endpoint = new Uri(value);
+                if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+                    throw new ArgumentException(
+                        $"The '{key}' value '{value}' is not a valid absolute URI.",
+                        nameof(connectionString));
+                options.Endpoint = uri;
                 options.Mode = LoraDbClientMode.Http;
             }
             else if (key.Equals("Mode", StringComparison.OrdinalIgnoreCase))

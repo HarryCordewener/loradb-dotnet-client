@@ -12,6 +12,12 @@ namespace LoraDb.Client;
 /// the exception is propagated to the caller.
 /// </para>
 /// <para>
+/// <see cref="LoraDbBatch"/> is <strong>not thread-safe</strong>. Concurrent calls to
+/// <see cref="Add"/>, <see cref="AddRange(IEnumerable{string})"/>, or
+/// <see cref="ExecuteAsync"/> from multiple threads without external synchronisation
+/// will produce undefined behaviour.
+/// </para>
+/// <para>
 /// Use <see cref="LoraDbClientCrudExtensions.CreateBatch"/> to obtain an instance from
 /// an <see cref="ILoraDbClient"/>.
 /// </para>

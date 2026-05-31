@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
@@ -344,18 +343,15 @@ public static class LoraDbClientCrudExtensions
     private static (string setClause, Dictionary<string, object?> parameters) BuildSetClause(
         IReadOnlyDictionary<string, object?> properties, string nodeAlias, string prefix, string paramName)
     {
-        var sb = new StringBuilder();
+        var parts = new List<string>(properties.Count);
         var parameters = new Dictionary<string, object?>(properties.Count);
-        var first = true;
         foreach (var (key, value) in properties)
         {
             ValidatePropertyKey(key, paramName);
-            if (!first) sb.Append(", ");
-            first = false;
             var pName = $"{prefix}_{key}";
-            sb.Append($"{nodeAlias}.{key} = ${pName}");
+            parts.Add($"{nodeAlias}.{key} = ${pName}");
             parameters[pName] = value;
         }
-        return (sb.ToString(), parameters);
+        return (string.Join(", ", parts), parameters);
     }
 }

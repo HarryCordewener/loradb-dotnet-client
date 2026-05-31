@@ -424,4 +424,54 @@ public class BatchTests
         await Assert.That(doc.RootElement.GetProperty("format").GetString())
             .IsEqualTo(Models.LoraDbQueryRequest.DefaultFormat);
     }
+
+    // ── Cancellation ───────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task Execute_PreCancelledToken_ThrowsBeforeAnyStatement()
+    {
+        var bridge = EmptyBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client)
+            .Add("MATCH (a) RETURN a")
+            .Add("MATCH (b) RETURN b");
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.That(async () => await batch.ExecuteAsync(cts.Token))
+            .ThrowsException()
+            .And.IsTypeOf<OperationCanceledException>();
+
+        await Assert.That(bridge.CallCount).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Execute_CancelledAfterFirstStatement_ThrowsAndDisposesResults()
+    {
+        using var cts = new CancellationTokenSource();
+        var callCount = 0;
+
+        var bridge = new FakeNativeBridge(responseFactory: _ =>
+        {
+            callCount++;
+            if (callCount == 1)
+                cts.Cancel(); // cancel after the first statement completes
+            return """{"rows":[]}""";
+        });
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        var batch = new LoraDbBatch(client)
+            .Add("MATCH (a) RETURN a")
+            .Add("MATCH (b) RETURN b")
+            .Add("MATCH (c) RETURN c");
+
+        await Assert.That(async () => await batch.ExecuteAsync(cts.Token))
+            .ThrowsException()
+            .And.IsTypeOf<OperationCanceledException>();
+
+        // Only the first statement ran; cancellation stopped further execution.
+        await Assert.That(callCount).IsEqualTo(1);
+    }
 }
