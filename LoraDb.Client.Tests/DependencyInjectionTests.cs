@@ -168,4 +168,40 @@ public class DependencyInjectionTests
             .And
             .IsTypeOf<ArgumentException>();
     }
+
+    [Test]
+    public async Task ConnectionString_Parse_EndpointKeyAlsoSetsEndpoint()
+    {
+        // "Endpoint=" is a synonym for "Server=" — both set Endpoint and switch to HTTP mode.
+        var opts = LoraDbClientOptions.FromConnectionString("Endpoint=http://example.com/");
+
+        await Assert.That(opts.Endpoint).IsEqualTo(new Uri("http://example.com/"));
+        await Assert.That(opts.Mode).IsEqualTo(LoraDbClientMode.Http);
+    }
+
+    [Test]
+    public async Task ConnectionString_Parse_SegmentWithoutEquals_IsIgnored()
+    {
+        // Segments that contain no '=' character must be silently skipped rather than
+        // throwing, so that future or custom key=value extensions don't break callers.
+        var opts = LoraDbClientOptions.FromConnectionString("Server=http://example.com/;NoEqualsSegment;Mode=Http");
+
+        await Assert.That(opts.Endpoint).IsEqualTo(new Uri("http://example.com/"));
+        await Assert.That(opts.Mode).IsEqualTo(LoraDbClientMode.Http);
+    }
+
+    [Test]
+    public async Task ConnectionString_Parse_MalformedServerUri_ThrowsArgumentException()
+    {
+        // A non-URI value for Server must throw ArgumentException (not UriFormatException)
+        // so the error type is consistent with all other argument errors in the library.
+        await Assert.That(() =>
+        {
+            LoraDbClientOptions.FromConnectionString("Server=not a valid uri!!!");
+            return Task.CompletedTask;
+        })
+            .ThrowsException()
+            .And
+            .IsTypeOf<ArgumentException>();
+    }
 }

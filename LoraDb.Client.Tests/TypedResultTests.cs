@@ -494,6 +494,71 @@ public class TypedResultTests
             .IsTypeOf<ArgumentNullException>();
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Missing-property error paths
+    // ──────────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task ReadRowArrays_ThrowsWhenColumnsMissing()
+    {
+        // "columns" is required for the rowArrays format.
+        var bridge = new FakeNativeBridge("""{"rows":[[1,2],[3,4]]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var result = await client.ExecuteAsync("RETURN 1");
+
+        await Assert.That(() => result.ReadRowArrays<int>())
+            .ThrowsException()
+            .And
+            .IsTypeOf<InvalidOperationException>();
+    }
+
+    [Test]
+    public async Task ReadGraph_ThrowsWhenGraphMissing()
+    {
+        // "graph" is required for the graph format.
+        var bridge = new FakeNativeBridge("""{"rows":[]}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var result = await client.ExecuteAsync("MATCH (n) RETURN n", format: "graph");
+
+        await Assert.That(() => result.ReadGraph<GraphNode, GraphRelationship>())
+            .ThrowsException()
+            .And
+            .IsTypeOf<InvalidOperationException>();
+    }
+
+    [Test]
+    public async Task ReadCombined_ThrowsWhenDataMissing()
+    {
+        // "data" is required for the combined format.
+        var bridge = new FakeNativeBridge("""{"columns":["source"],"graph":{"nodes":[],"relationships":[]}}""");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var result = await client.ExecuteAsync("MATCH (n) RETURN n", format: "combined");
+
+        await Assert.That(() => result.ReadCombined<CombinedData, GraphNode, GraphRelationship>())
+            .ThrowsException()
+            .And
+            .IsTypeOf<InvalidOperationException>();
+    }
+
+    [Test]
+    public async Task Deserialize_WhenRootDeserializesToNull_ThrowsInvalidOperationException()
+    {
+        // A JSON null literal deserializes to null for a reference type.
+        // DeserializeElement must detect this and throw rather than silently returning null.
+        var bridge = new FakeNativeBridge("null");
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        using var result = await client.ExecuteAsync("RETURN NULL");
+
+        await Assert.That(() => result.Deserialize<PersonRow>())
+            .ThrowsException()
+            .And
+            .IsTypeOf<InvalidOperationException>();
+    }
+
     public sealed class PersonRow
     {
         [JsonPropertyName("name")]

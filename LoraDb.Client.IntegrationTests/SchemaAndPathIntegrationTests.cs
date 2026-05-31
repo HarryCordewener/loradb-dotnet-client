@@ -14,6 +14,9 @@ public class SchemaAndPathIntegrationTests : IntegrationTestBase
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
         ILoraDbClientFixture fixture)
     {
+        // SHOW INDEXES YIELD and DROP INDEX IF EXISTS are catalog commands not supported by LoraDB v0.15.0.
+        Skip.Test("Catalog management commands (SHOW INDEXES, DROP INDEX IF EXISTS) are not supported by LoraDB v0.15.0.");
+
         await WithCleanDatabaseAsync(fixture, async client =>
         {
             var indexName = UniqueValue("idx_person_name");
@@ -43,6 +46,9 @@ public class SchemaAndPathIntegrationTests : IntegrationTestBase
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
         ILoraDbClientFixture fixture)
     {
+        // SHOW CONSTRAINTS YIELD and DROP CONSTRAINT IF EXISTS are catalog commands not supported by LoraDB v0.15.0.
+        Skip.Test("Catalog management commands (SHOW CONSTRAINTS, DROP CONSTRAINT IF EXISTS) are not supported by LoraDB v0.15.0.");
+
         await WithCleanDatabaseAsync(fixture, async client =>
         {
             var constraintName = UniqueValue("constraint_person_name");

@@ -10,7 +10,13 @@ internal static class LoraDbJsonSerializerOptions
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public static readonly JsonSerializerOptions DefaultResultSerializationOptions = new(JsonSerializerDefaults.Web);
+    /// <summary>
+    /// Baseline options used when no custom options are supplied by the caller.
+    /// Do not mutate this instance; use <see cref="CreateResultOptions"/> to obtain
+    /// a fresh writable copy.
+    /// </summary>
+    public static readonly JsonSerializerOptions DefaultResultSerializationOptions =
+        new(JsonSerializerDefaults.Web);
 
     public static JsonSerializerOptions CreateResultOptions(JsonSerializerOptions? serializerOptions)
     {
