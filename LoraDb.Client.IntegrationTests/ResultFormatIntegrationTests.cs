@@ -273,11 +273,11 @@ public class ResultFormatIntegrationTests : IntegrationTestBase
         await WithSocialGraphAsync(fixture, async client =>
         {
             using var result = await client.ExecuteAsync(
-                "MATCH (a:Person)-[r:FOLLOWS]->(b:Person) RETURN a.name AS source, r, b.name AS target",
+                "MATCH (a:Person)-[r:FOLLOWS]->(b:Person) RETURN a, r, b",
                 format: "combined");
-            var combined = result.ReadCombined<RelationshipData, GraphNode, GraphRelationship>();
+            var combined = result.ReadCombined<GraphNode, GraphNode, GraphRelationship>();
 
-            await Assert.That(combined.Columns).Contains("source");
+            await Assert.That(combined.Columns).Contains("a");
             await Assert.That(combined.Data.Count).IsGreaterThanOrEqualTo(1);
             await Assert.That(combined.Graph.Nodes.Count).IsGreaterThanOrEqualTo(2);
         });
@@ -296,14 +296,14 @@ public class ResultFormatIntegrationTests : IntegrationTestBase
         await WithSocialGraphAsync(fixture, async client =>
         {
             using var result = await client.ExecuteAsync(
-                "MATCH (a:Person)-[r:FOLLOWS]->(b:Person) RETURN a.name AS source, r, b.name AS target",
+                "MATCH (a:Person)-[r:FOLLOWS]->(b:Person) RETURN a, r, b",
                 format: "combined");
             var combined = result.ReadCombined(
-                ResultFormatJsonContext.Default.RelationshipData,
+                ResultFormatJsonContext.Default.GraphNode,
                 ResultFormatJsonContext.Default.GraphNode,
                 ResultFormatJsonContext.Default.GraphRelationship);
 
-            await Assert.That(combined.Columns).Contains("source");
+            await Assert.That(combined.Columns).Contains("a");
             await Assert.That(combined.Data.Count).IsGreaterThanOrEqualTo(1);
             await Assert.That(combined.Graph.Nodes.Count).IsGreaterThanOrEqualTo(2);
         });

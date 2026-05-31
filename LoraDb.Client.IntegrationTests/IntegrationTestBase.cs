@@ -36,7 +36,7 @@ public abstract class IntegrationTestBase
             test);
     }
 
-    protected static string UniqueValue(string prefix) => $"{prefix}-{Guid.NewGuid():N}";
+    protected static string UniqueValue(string prefix) => $"{prefix}_{Guid.NewGuid():N}";
 
     protected static bool IsHttpFixture(ILoraDbClientFixture fixture) => fixture is HttpClientFixture;
 
