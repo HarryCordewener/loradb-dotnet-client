@@ -27,3 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LoraDbBatch` / `LoraDbBatchResult` — sequential fail-fast batch executor that
   runs multiple statements one-after-another using LoraDB's auto-commit
   semantics; accessible via `ILoraDbClient.CreateBatch()`.
+- `LoraDbHttpManagementClient` / `ILoraDbHttpManagementClient` — HTTP management
+  client exposing `HealthAsync`, `ExplainAsync` (compile-only plan),
+  `ProfileAsync` (execute with runtime metrics), `SaveSnapshotAsync`,
+  `LoadSnapshotAsync`, `CheckpointAsync`, `WalStatusAsync`, and
+  `TruncateWalAsync`; backed by five new model types (`LoraDbHealthResult`,
+  `LoraDbQueryPlan`, `LoraDbQueryProfile`, `LoraDbSnapshotMeta`,
+  `LoraDbWalStatus`).

@@ -269,7 +269,99 @@ var total = batchResult.Results[2].Root.GetProperty("rows")[0].GetProperty("tota
 
 ---
 
-## 9) Testing with real LoraDB
+## 9) HTTP management client
+
+`LoraDbHttpManagementClient` extends the standard query API with HTTP-specific
+management operations: health check, query explain/profile, and the opt-in
+admin snapshot/WAL endpoints.
+
+### Create
+
+```csharp
+await using var mgmt = LoraDbHttpManagementClient.Create(new Uri("http://127.0.0.1:4747/"));
+// or with IHttpClientFactory:
+await using var mgmt = LoraDbHttpManagementClient.Create(endpoint, httpClientFactory);
+```
+
+`ILoraDbHttpManagementClient` extends `ILoraDbClient`, so it also supports
+`ExecuteAsync`, CRUD extensions, batches, and typed streaming.
+
+### Health check
+
+```csharp
+var health = await mgmt.HealthAsync();
+Console.WriteLine(health.Status);   // "ok"
+Console.WriteLine(health.IsHealthy); // true
+```
+
+### Explain (compile without executing)
+
+```csharp
+var plan = await mgmt.ExplainAsync(
+    "MATCH (p:Person) WHERE p.name = $name RETURN p",
+    new Dictionary<string, object?> { ["name"] = "Alice" });
+
+Console.WriteLine(plan.Shape);          // "readOnly"
+Console.WriteLine(plan.IsReadOnly);     // true
+Console.WriteLine(plan.Tree.Operator);  // e.g. "Projection"
+```
+
+### Profile (execute with metrics)
+
+```csharp
+var profile = await mgmt.ProfileAsync("MATCH (p:Person) RETURN p");
+
+Console.WriteLine(profile.Metrics.TotalElapsedNs);
+Console.WriteLine(profile.Metrics.TotalRows);
+foreach (var (operatorId, metrics) in profile.Metrics.PerOperator)
+    Console.WriteLine($"  [{operatorId}] rows={metrics.Rows} elapsedNs={metrics.ElapsedNs}");
+```
+
+`ProfileAsync` runs the query for real — mutations have the same side-effects
+as `ExecuteAsync`.
+
+### Snapshot save / load (opt-in: requires `--snapshot-path` on the server)
+
+```csharp
+// Save to the server-configured default path
+var meta = await mgmt.SaveSnapshotAsync();
+Console.WriteLine($"Saved {meta.NodeCount} nodes to {meta.Path}");
+
+// Save to an explicit path (overrides server default for this request)
+var meta = await mgmt.SaveSnapshotAsync("/var/backups/lora/2026-04-24.bin");
+
+// Restore
+var meta = await mgmt.LoadSnapshotAsync();
+```
+
+### Checkpoint (opt-in: requires `--wal-dir` on the server)
+
+```csharp
+var meta = await mgmt.CheckpointAsync();
+Console.WriteLine($"Checkpoint LSN: {meta.WalLsn}");
+```
+
+### WAL status and truncation (opt-in: requires `--wal-dir` on the server)
+
+```csharp
+var status = await mgmt.WalStatusAsync();
+Console.WriteLine($"Durable LSN: {status.DurableLsn}, next: {status.NextLsn}");
+if (status.BgFailure is not null)
+    Console.Error.WriteLine($"WAL background failure: {status.BgFailure}");
+
+// Truncate up to the current durableLsn
+await mgmt.TruncateWalAsync();
+
+// Truncate up to a specific LSN
+await mgmt.TruncateWalAsync(fenceLsn: status.DurableLsn);
+```
+
+Admin endpoints return `HttpRequestException` with HTTP 404 when the
+corresponding server flag was not set at start-up.
+
+---
+
+## 10) Testing with real LoraDB
 
 To run integration tests in this repository:
 
