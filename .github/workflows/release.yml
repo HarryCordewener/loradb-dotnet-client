@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Generate release notes with git-cliff
-        uses: orhun/git-cliff-action@v3
+        uses: orhun/git-cliff-action@v4
         id: cliff
         with:
           config: cliff.toml

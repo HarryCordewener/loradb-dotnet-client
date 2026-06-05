@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: dotnet test LoraDb.Client.slnx --configuration Release --no-restore --no-build
       - name: Generate changelog fragment
-        uses: orhun/git-cliff-action@v3
+        uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
           args: --latest --strip header
