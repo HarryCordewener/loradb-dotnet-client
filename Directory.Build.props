@@ -9,7 +9,9 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>loradb;graph;database;cypher;embedded</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <!-- Version is driven by the GitHub release tag in nuget-publish.yml (-p:Version=<tag>).
+         This sentinel ensures any out-of-workflow pack is obviously not a real release. -->
+    <Version>0.0.0-dev</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
