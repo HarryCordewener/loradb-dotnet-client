@@ -4,7 +4,7 @@ using LoraDb.Client.Transports;
 
 namespace LoraDb.Client;
 
-public sealed class LoraDbClient : ILoraDbClient
+public sealed class LoraDbClient : ILoraDbClient, ILoraDbCapabilitiesProvider
 {
     private readonly ILoraDbTransport _transport;
 
@@ -42,6 +42,15 @@ public sealed class LoraDbClient : ILoraDbClient
     {
         return new LoraDbClient(new EmbeddedLoraDbTransport(nativeBridge ?? new PInvokeLoraDbNativeBridge(), serializerOptions));
     }
+
+    public static LoraDbClient CreateEmbedded(LoraDbEmbeddedOpenOptions openOptions, JsonSerializerOptions? serializerOptions = null)
+    {
+        if (openOptions is null)
+            throw new ArgumentNullException(nameof(openOptions));
+        return new LoraDbClient(new EmbeddedLoraDbTransport(new PInvokeLoraDbNativeBridge(openOptions), serializerOptions));
+    }
+
+    public LoraDbClientCapabilities Capabilities => _transport.Capabilities;
 
     public Task<LoraDbQueryResult> ExecuteAsync(string query, IReadOnlyDictionary<string, object?>? parameters = null, string format = Models.LoraDbQueryRequest.DefaultFormat, CancellationToken cancellationToken = default)
     {

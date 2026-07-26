@@ -36,6 +36,9 @@ public static class ServiceCollectionExtensions
             o.Mode = parsed.Mode;
             o.Endpoint = parsed.Endpoint;
             o.NativeLibraryName = parsed.NativeLibraryName;
+            o.EmbeddedDatabaseName = parsed.EmbeddedDatabaseName;
+            o.EmbeddedDatabaseDirectory = parsed.EmbeddedDatabaseDirectory;
+            o.EmbeddedWalDirectory = parsed.EmbeddedWalDirectory;
             o.SerializerOptions = parsed.SerializerOptions;
         });
 
@@ -57,6 +60,9 @@ public static class ServiceCollectionExtensions
             o.Mode = options.Mode;
             o.Endpoint = options.Endpoint;
             o.NativeLibraryName = options.NativeLibraryName;
+            o.EmbeddedDatabaseName = options.EmbeddedDatabaseName;
+            o.EmbeddedDatabaseDirectory = options.EmbeddedDatabaseDirectory;
+            o.EmbeddedWalDirectory = options.EmbeddedWalDirectory;
             o.SerializerOptions = options.SerializerOptions;
         });
 
@@ -75,7 +81,13 @@ public static class ServiceCollectionExtensions
             return options.Mode switch
             {
                 LoraDbClientMode.Embedded => LoraDbClient.CreateEmbedded(
-                    new PInvokeLoraDbNativeBridge(options.NativeLibraryName),
+                    new PInvokeLoraDbNativeBridge(new LoraDbEmbeddedOpenOptions
+                    {
+                        NativeLibraryName = options.NativeLibraryName,
+                        DatabaseName = options.EmbeddedDatabaseName,
+                        DatabaseDirectory = options.EmbeddedDatabaseDirectory,
+                        WalDirectory = options.EmbeddedWalDirectory,
+                    }),
                     options.SerializerOptions),
                 _ => CreateHttpClient(sp, options),
             };

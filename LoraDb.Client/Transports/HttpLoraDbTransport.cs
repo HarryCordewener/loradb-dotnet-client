@@ -11,6 +11,18 @@ public sealed class HttpLoraDbTransport : ILoraDbTransport
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private readonly JsonSerializerOptions _resultSerializerOptions;
+    private static readonly LoraDbClientCapabilities HttpCapabilities = new()
+    {
+        SupportedResultFormats = ["rows", "rowArrays", "graph", "combined"],
+        SupportsExplain = true,
+        SupportsProfile = true,
+        SupportsSnapshots = true,
+        SupportsCheckpoint = true,
+        SupportsWalStatus = true,
+        SupportsWalTruncate = true,
+    };
+
+    public LoraDbClientCapabilities Capabilities => HttpCapabilities;
 
     public HttpLoraDbTransport(Uri endpoint, HttpClient? httpClient = null, JsonSerializerOptions? serializerOptions = null)
     {

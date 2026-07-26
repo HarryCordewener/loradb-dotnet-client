@@ -13,7 +13,7 @@ namespace LoraDb.Client;
 /// Admin endpoints are opt-in on the server side; see
 /// <see cref="ILoraDbHttpManagementClient"/> for details.
 /// </remarks>
-public sealed class LoraDbHttpManagementClient : ILoraDbHttpManagementClient
+public sealed class LoraDbHttpManagementClient : ILoraDbHttpManagementClient, ILoraDbCapabilitiesProvider
 {
     private readonly HttpLoraDbTransport _transport;
 
@@ -89,6 +89,8 @@ public sealed class LoraDbHttpManagementClient : ILoraDbHttpManagementClient
     }
 
     // ── ILoraDbHttpManagementClient ────────────────────────────────────────────
+
+    public LoraDbClientCapabilities Capabilities => _transport.Capabilities;
 
     /// <inheritdoc/>
     public Task<LoraDbHealthResult> HealthAsync(CancellationToken cancellationToken = default)

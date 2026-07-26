@@ -157,6 +157,27 @@ public class DependencyInjectionTests
     }
 
     [Test]
+    public async Task ConnectionString_Parse_EmbeddedPersistenceOptions()
+    {
+        var opts = LoraDbClientOptions.FromConnectionString(
+            "Mode=Embedded;DatabaseName=appdb;DatabaseDirectory=/tmp/lora;NativeLibrary=lora_ffi");
+
+        await Assert.That(opts.Mode).IsEqualTo(LoraDbClientMode.Embedded);
+        await Assert.That(opts.EmbeddedDatabaseName).IsEqualTo("appdb");
+        await Assert.That(opts.EmbeddedDatabaseDirectory).IsEqualTo("/tmp/lora");
+    }
+
+    [Test]
+    public async Task ConnectionString_Parse_EmbeddedWalDirectory()
+    {
+        var opts = LoraDbClientOptions.FromConnectionString(
+            "Mode=Embedded;WalDirectory=/tmp/lora-wal");
+
+        await Assert.That(opts.Mode).IsEqualTo(LoraDbClientMode.Embedded);
+        await Assert.That(opts.EmbeddedWalDirectory).IsEqualTo("/tmp/lora-wal");
+    }
+
+    [Test]
     public async Task ConnectionString_EmptyString_ThrowsArgumentException()
     {
         await Assert.That(() =>

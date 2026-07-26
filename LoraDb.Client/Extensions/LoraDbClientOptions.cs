@@ -16,6 +16,12 @@ public sealed class LoraDbClientOptions
 
     public string NativeLibraryName { get; set; } = "lora_ffi";
 
+    public string? EmbeddedDatabaseName { get; set; }
+
+    public string? EmbeddedDatabaseDirectory { get; set; }
+
+    public string? EmbeddedWalDirectory { get; set; }
+
     public JsonSerializerOptions? SerializerOptions { get; set; }
 
     public static LoraDbClientOptions FromConnectionString(string connectionString)
@@ -56,6 +62,21 @@ public sealed class LoraDbClientOptions
             else if (key.Equals("NativeLibrary", StringComparison.OrdinalIgnoreCase))
             {
                 options.NativeLibraryName = value;
+            }
+            else if (key.Equals("DatabaseName", StringComparison.OrdinalIgnoreCase))
+            {
+                options.EmbeddedDatabaseName = value;
+                options.Mode = LoraDbClientMode.Embedded;
+            }
+            else if (key.Equals("DatabaseDirectory", StringComparison.OrdinalIgnoreCase))
+            {
+                options.EmbeddedDatabaseDirectory = value;
+                options.Mode = LoraDbClientMode.Embedded;
+            }
+            else if (key.Equals("WalDirectory", StringComparison.OrdinalIgnoreCase))
+            {
+                options.EmbeddedWalDirectory = value;
+                options.Mode = LoraDbClientMode.Embedded;
             }
         }
 

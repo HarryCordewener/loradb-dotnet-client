@@ -44,15 +44,15 @@ public class ResultFormatTests
     }
 
     [Test]
-    public async Task Embedded_CustomFormat_IncludedInRequest()
+    public async Task Embedded_CustomFormat_ThrowsNotSupported()
     {
-        var bridge = new FakeNativeBridge("""{"graph":{}}""");
+        var bridge = new FakeNativeBridge();
         await using var client = LoraDbClient.CreateEmbedded(bridge);
 
-        using var result = await client.ExecuteAsync("MATCH (n) RETURN n", format: "graph");
-
-        using var doc = JsonDocument.Parse(bridge.LastRequestJson!);
-        await Assert.That(doc.RootElement.GetProperty("format").GetString()).IsEqualTo("graph");
+        await Assert.That(async () => await client.ExecuteAsync("MATCH (n) RETURN n", format: "graph"))
+            .ThrowsException()
+            .And
+            .IsTypeOf<NotSupportedException>();
     }
 
     [Test]

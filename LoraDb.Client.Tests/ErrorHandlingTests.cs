@@ -173,6 +173,18 @@ public class ErrorHandlingTests
         public string ExecuteJson(string requestJson) =>
             throw new InvalidOperationException("Simulated native bridge failure.");
 
+        public string ExplainJson(string requestJson) =>
+            throw new InvalidOperationException("Simulated native bridge failure.");
+
+        public string ProfileJson(string requestJson) =>
+            throw new InvalidOperationException("Simulated native bridge failure.");
+
+        public LoraDb.Client.Models.LoraDbSnapshotMeta SaveSnapshot(string path) =>
+            throw new InvalidOperationException("Simulated native bridge failure.");
+
+        public LoraDb.Client.Models.LoraDbSnapshotMeta LoadSnapshot(string path) =>
+            throw new InvalidOperationException("Simulated native bridge failure.");
+
         public void Dispose() { }
     }
 }

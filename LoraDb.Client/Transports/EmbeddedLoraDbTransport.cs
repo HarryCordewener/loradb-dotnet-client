@@ -9,6 +9,18 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
 {
     private readonly ILoraDbNativeBridge _nativeBridge;
     private readonly JsonSerializerOptions _resultSerializerOptions;
+    private static readonly LoraDbClientCapabilities EmbeddedCapabilities = new()
+    {
+        SupportedResultFormats = ["rows"],
+        SupportsExplain = true,
+        SupportsProfile = true,
+        SupportsSnapshots = true,
+        SupportsCheckpoint = false,
+        SupportsWalStatus = false,
+        SupportsWalTruncate = false,
+    };
+
+    public LoraDbClientCapabilities Capabilities => EmbeddedCapabilities;
 
     public EmbeddedLoraDbTransport(ILoraDbNativeBridge nativeBridge, JsonSerializerOptions? serializerOptions = null)
     {
@@ -39,6 +51,8 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (!string.Equals(format, LoraDbQueryRequest.DefaultFormat, StringComparison.OrdinalIgnoreCase))
+                throw new NotSupportedException($"Embedded mode supports only '{LoraDbQueryRequest.DefaultFormat}' format. Requested '{format}'.");
 
             var request = new LoraDbQueryRequest(query)
             {
@@ -58,9 +72,81 @@ public sealed class EmbeddedLoraDbTransport : ILoraDbTransport
         }
     }
 
+    public Task<LoraDbQueryPlan> ExplainAsync(string query, IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var requestJson = BuildRequestJson(query, parameters);
+            var responseJson = _nativeBridge.ExplainJson(requestJson);
+            var plan = JsonSerializer.Deserialize<LoraDbQueryPlan>(responseJson, _resultSerializerOptions);
+            return plan is null
+                ? Task.FromException<LoraDbQueryPlan>(new InvalidOperationException("Embedded explain returned a null payload."))
+                : Task.FromResult(plan);
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException<LoraDbQueryPlan>(ex);
+        }
+    }
+
+    public Task<LoraDbQueryProfile> ProfileAsync(string query, IReadOnlyDictionary<string, object?>? parameters, CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var requestJson = BuildRequestJson(query, parameters);
+            var responseJson = _nativeBridge.ProfileJson(requestJson);
+            var profile = JsonSerializer.Deserialize<LoraDbQueryProfile>(responseJson, _resultSerializerOptions);
+            return profile is null
+                ? Task.FromException<LoraDbQueryProfile>(new InvalidOperationException("Embedded profile returned a null payload."))
+                : Task.FromResult(profile);
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException<LoraDbQueryProfile>(ex);
+        }
+    }
+
+    public Task<LoraDbSnapshotMeta> SaveSnapshotAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_nativeBridge.SaveSnapshot(path));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException<LoraDbSnapshotMeta>(ex);
+        }
+    }
+
+    public Task<LoraDbSnapshotMeta> LoadSnapshotAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_nativeBridge.LoadSnapshot(path));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException<LoraDbSnapshotMeta>(ex);
+        }
+    }
+
     public ValueTask DisposeAsync()
     {
         _nativeBridge.Dispose();
         return default;
+    }
+
+    private static string BuildRequestJson(string query, IReadOnlyDictionary<string, object?>? parameters)
+    {
+        var request = new LoraDbQueryRequest(query)
+        {
+            Parameters = parameters,
+            Format = LoraDbQueryRequest.DefaultFormat,
+        };
+        return JsonSerializer.Serialize(request, LoraDbJsonSerializerOptions.RequestSerializationOptions);
     }
 }
