@@ -2,13 +2,14 @@
   <PropertyGroup>
     <Authors>Harry Cordewener</Authors>
     <Company>Harry Cordewener</Company>
-    <Copyright>Copyright © Harry Cordewener 2025</Copyright>
+    <Copyright>Copyright © Harry Cordewener 2026</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/HarryCordewener/loradb-client</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/HarryCordewener/loradb-client</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/HarryCordewener/loradb-dotnet-client</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HarryCordewener/loradb-dotnet-client</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>loradb;graph;database;cypher;embedded</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <VersionPrefix>0.1.0</VersionPrefix>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
