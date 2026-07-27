@@ -40,22 +40,23 @@ jobs:
       - name: Pack
         run: |
           if [[ -f RELEASE_NOTES.md ]]; then
-            RELEASE_NOTES="$(tr '\r\n' ' ' < RELEASE_NOTES.md | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
+            RELEASE_NOTES="$(sed ':a;N;$!ba;s/\r//g;s/\n/ /g' RELEASE_NOTES.md | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
           else
             RELEASE_NOTES=""
           fi
+          RELEASE_NOTES_ESCAPED="${RELEASE_NOTES//\"/\\\"}"
           dotnet pack LoraDb.Client/LoraDb.Client.csproj \
             -c Release \
             -o ./artifacts \
             --no-restore \
             -p:Version=${{ steps.version.outputs.version }} \
-            -p:PackageReleaseNotes="\"${RELEASE_NOTES}\""
+            -p:PackageReleaseNotes="\"${RELEASE_NOTES_ESCAPED}\""
           dotnet pack LoraDb.Client.Native/LoraDb.Client.Native.csproj \
             -c Release \
             -o ./artifacts \
             --no-restore \
             -p:Version=${{ steps.version.outputs.version }} \
-            -p:PackageReleaseNotes="\"${RELEASE_NOTES}\""
+            -p:PackageReleaseNotes="\"${RELEASE_NOTES_ESCAPED}\""
       - name: Push to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --source "https://api.nuget.org/v3/index.json" --skip-duplicate
       - name: Push to GitHub Packages
