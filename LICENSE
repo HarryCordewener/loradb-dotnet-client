@@ -1,3 +1,17 @@
+SCOPE NOTE
+
+The MIT License below covers the source code in this repository. It does NOT
+cover the prebuilt LoraDB native libraries checked in under
+LoraDb.Client.Native/runtimes/*/native/ (lora_ffi.dll, liblora_ffi.so,
+liblora_ffi.dylib). Those are compiled from https://github.com/lora-db/lora,
+copyright LoraDB, Inc., and are licensed under the Business Source License 1.1.
+Their license text is reproduced verbatim in THIRD-PARTY-NOTICES.md.
+
+Both published NuGet packages bundle those binaries; PACKAGE-LICENSE.md is the
+license file shipped inside the packages.
+
+----------------------------------------------------------------------------
+
 MIT License
 
 Copyright (c) 2026 Harry Cordewener

@@ -3,11 +3,20 @@
   <PropertyGroup>
     <TargetFrameworks>net10.0;netstandard2.1</TargetFrameworks>
     <PackageId>LoraDb.Client</PackageId>
-    <Description>.NET client for LoraDB with HTTP and embedded Rust FFI transports.</Description>
+    <Description>.NET client for LoraDB with HTTP and embedded Rust FFI transports. The managed client is MIT; this package also bundles lora_ffi native binaries from LoraDB, Inc. under Business Source License 1.1 — see PACKAGE-LICENSE.md and THIRD-PARTY-NOTICES.md in this package.</Description>
+    <!-- This package bundles the lora_ffi natives (see the runtimes ItemGroup
+         below), so it is not purely MIT. PackageLicenseExpression cannot express
+         the mix: it only accepts OSI/FSF-approved SPDX ids, and BUSL-1.1 is
+         neither. BUSL-1.1 also requires the license be conspicuously displayed
+         on every copy of the Licensed Work, so the full text ships in-package. -->
+    <PackageLicenseFile>PACKAGE-LICENSE.md</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\PACKAGE-LICENSE.md" Pack="true" PackagePath="\" />
+    <None Include="..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
