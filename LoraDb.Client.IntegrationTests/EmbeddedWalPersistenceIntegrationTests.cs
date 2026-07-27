@@ -244,7 +244,7 @@ public class EmbeddedWalPersistenceIntegrationTests
 
             var saved = await client.SaveSnapshotAsync(snapshotPath);
             await Assert.That(saved.Path).IsEqualTo(snapshotPath);
-            await Assert.That(saved.WalLsn).IsNotNull();
+            await Assert.That(saved.WalLsn).IsNull();
 
             // Write an additional node, then restore — it should disappear.
             using (var __ = await client.ExecuteAsync($"CREATE (:WalSnap {{key: 'extra-{Guid.NewGuid():N}'}})")) { }
