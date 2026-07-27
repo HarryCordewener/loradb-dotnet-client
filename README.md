@@ -30,6 +30,17 @@ A modern .NET client for [LoraDB](https://github.com/lora-db/lora) — a graph d
 dotnet add package LoraDb.Client
 ```
 
+That is everything HTTP mode needs. **Embedded mode additionally requires the
+native binaries**, which ship in a separate package:
+
+```bash
+dotnet add package LoraDb.Client.Native
+```
+
+`LoraDb.Client.Native` is kept separate because the `lora_ffi` binaries are
+BUSL-1.1 licensed — see [License](#-license). Without it, embedded mode fails at
+startup with a `DllNotFoundException`.
+
 ---
 
 ## ⚡ Quick start
@@ -69,6 +80,9 @@ await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/
 ```
 
 ### Embedded mode
+
+> Requires the `LoraDb.Client.Native` package — or your own `lora_ffi` binary,
+> pointed at via `LoraDbEmbeddedOpenOptions.NativeLibraryName`.
 
 ```csharp
 // In-memory (ephemeral)
@@ -153,7 +167,7 @@ Two licenses apply, depending on which part you use.
 | Part | License |
 |---|---|
 | All C# source in this repo, and the managed assemblies in both packages | [MIT](LICENSE) — Copyright © 2026 Harry Cordewener |
-| The bundled `lora_ffi` native libraries (`runtimes/*/native/`) | [Business Source License 1.1](THIRD-PARTY-NOTICES.md) — Copyright LoraDB, Inc. |
+| The `lora_ffi` native libraries (`runtimes/*/native/`), bundled only in `LoraDb.Client.Native` | [Business Source License 1.1](THIRD-PARTY-NOTICES.md) — Copyright LoraDB, Inc. |
 
 The native libraries are compiled from [LoraDB](https://github.com/lora-db/lora),
 which is licensed under BUSL-1.1 (SPDX: `BUSL-1.1`), not an open source license.
@@ -162,11 +176,12 @@ Additional Use Grant permits internal-business and non-production use but does
 not permit offering LoraDB as a database-as-a-service, hosted API, managed
 database platform, or substantially similar hosted service for third parties.
 
-**Both `LoraDb.Client` and `LoraDb.Client.Native` bundle these binaries**, so
-the BUSL-1.1 terms apply to either package. Each package ships
-`PACKAGE-LICENSE.md` (the split) and `THIRD-PARTY-NOTICES.md` (the verbatim
-BUSL-1.1 text). Read them before use.
+**Only `LoraDb.Client.Native` bundles these binaries**, so the BUSL-1.1 terms
+apply to that package. It ships `PACKAGE-LICENSE.md` (the split) and
+`THIRD-PARTY-NOTICES.md` (the verbatim BUSL-1.1 text) — read them before use.
+`LoraDb.Client` contains managed code only and is published as plain MIT; if you
+never enable embedded mode, BUSL-1.1 does not enter your dependency graph.
 
-> Versions 0.1.2 and earlier of both packages incorrectly declared `MIT` as the
-> sole NuGet license expression.
+> Versions 0.1.2 and earlier of `LoraDb.Client` also bundled the binaries, and
+> both packages incorrectly declared `MIT` as the sole NuGet license expression.
 

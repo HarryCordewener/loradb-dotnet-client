@@ -7,8 +7,9 @@ liblora_ffi.dylib). Those are compiled from https://github.com/lora-db/lora,
 copyright LoraDB, Inc., and are licensed under the Business Source License 1.1.
 Their license text is reproduced verbatim in THIRD-PARTY-NOTICES.md.
 
-Both published NuGet packages bundle those binaries; PACKAGE-LICENSE.md is the
-license file shipped inside the packages.
+Of the two published NuGet packages, only LoraDb.Client.Native bundles those
+binaries; PACKAGE-LICENSE.md is the license file shipped inside that package.
+LoraDb.Client ships managed code only and is published as plain MIT.
 
 ----------------------------------------------------------------------------
 

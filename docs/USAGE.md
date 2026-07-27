@@ -22,7 +22,14 @@ await using var client = LoraDbClient.CreateHttp(endpoint, httpClientFactory);
 
 ### Embedded mode
 
-Use embedded mode to execute queries through the native `lora_ffi` bridge:
+Use embedded mode to execute queries through the native `lora_ffi` bridge.
+
+Embedded mode needs the `lora_ffi` native library at runtime; `LoraDb.Client`
+does not ship it. Add the companion package:
+
+```bash
+dotnet add package LoraDb.Client.Native
+```
 
 ```csharp
 using LoraDb.Client;
@@ -30,6 +37,8 @@ using LoraDb.Client;
 await using var client = LoraDbClient.CreateEmbedded();
 ```
 
+> `LoraDb.Client.Native` bundles BUSL-1.1 licensed binaries — see the repository
+> `LICENSE` and the `THIRD-PARTY-NOTICES.md` shipped in that package.
 > Embedded mode is not supported on `netstandard2.1`.
 > Embedded mode currently supports only `rows` query format.
 
@@ -138,9 +147,15 @@ Supported keys:
 
 ## 5) Embedded native library notes
 
-By default, embedded mode loads library name `lora_ffi`.
+By default, embedded mode loads library name `lora_ffi`. `LoraDb.Client`
+registers a resolver that looks for the RID-specific binary under
+`runtimes/{rid}/native/`, first next to the loaded assembly and then under
+`AppContext.BaseDirectory` — that is where the `LoraDb.Client.Native` package
+places the binaries. If neither is found the OS default search is used, and a
+missing library surfaces as `DllNotFoundException`.
 
-If needed, set a custom name via options:
+If needed, set a custom name (or an absolute path to your own build) via
+options:
 
 ```csharp
 services.AddLoraDb(new LoraDbClientOptions
