@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="runtimes/win-x64/native/lora_ffi.dll"
           Pack="true" PackagePath="runtimes/win-x64/native/" />
     <None Include="runtimes/linux-x64/native/liblora_ffi.so"
