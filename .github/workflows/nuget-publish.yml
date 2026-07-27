@@ -49,13 +49,13 @@ jobs:
             -o ./artifacts \
             --no-restore \
             -p:Version=${{ steps.version.outputs.version }} \
-            -p:PackageReleaseNotes="${RELEASE_NOTES}"
+            -p:PackageReleaseNotes="\"${RELEASE_NOTES}\""
           dotnet pack LoraDb.Client.Native/LoraDb.Client.Native.csproj \
             -c Release \
             -o ./artifacts \
             --no-restore \
             -p:Version=${{ steps.version.outputs.version }} \
-            -p:PackageReleaseNotes="${RELEASE_NOTES}"
+            -p:PackageReleaseNotes="\"${RELEASE_NOTES}\""
       - name: Push to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --source "https://api.nuget.org/v3/index.json" --skip-duplicate
       - name: Push to GitHub Packages
