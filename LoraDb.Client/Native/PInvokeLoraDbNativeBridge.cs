@@ -33,12 +33,15 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
 #else
     /// <summary>
     /// Optional resolver invoked before <see cref="NativeLibrary.Load(string)"/>.
-    /// Set by <c>LoraDb.Client.Native</c>'s module initializer to locate
-    /// RID-specific binaries shipped inside that NuGet package.
+    /// Set by the <c>LoraDbNativeLoader</c> module initializer to locate the
+    /// RID-specific binaries shipped in the <c>LoraDb.Client.Native</c> package.
     /// Returns the full path to load, or <see langword="null"/> to fall back
     /// to the OS default search.
     /// </summary>
     public static Func<string, string?>? LibraryPathResolver { get; set; }
+
+    /// <summary>Library name embedded mode loads unless overridden.</summary>
+    internal const string DefaultNativeLibraryName = "lora_ffi";
 
     private IntPtr _libraryHandle;
     private IntPtr _dbHandle;
@@ -54,7 +57,7 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
     private readonly DbSnapshotDelegate _dbLoadSnapshot;
     private readonly FreeStringDelegate _freeString;
 
-    public PInvokeLoraDbNativeBridge(string libraryName = "lora_ffi")
+    public PInvokeLoraDbNativeBridge(string libraryName = DefaultNativeLibraryName)
         : this(new LoraDbEmbeddedOpenOptions { NativeLibraryName = libraryName })
     {
     }
@@ -69,7 +72,15 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
             throw new ArgumentException("DatabaseName and WalDirectory are mutually exclusive in embedded mode.", nameof(openOptions));
 
         var resolvedPath = LibraryPathResolver?.Invoke(openOptions.NativeLibraryName) ?? openOptions.NativeLibraryName;
-        _libraryHandle = NativeLibrary.Load(resolvedPath);
+        try
+        {
+            _libraryHandle = NativeLibrary.Load(resolvedPath);
+        }
+        catch (DllNotFoundException ex)
+        {
+            throw new DllNotFoundException(
+                BuildLibraryNotFoundMessage(openOptions.NativeLibraryName, resolvedPath), ex);
+        }
 
         _dbNew = Marshal.GetDelegateForFunctionPointer<DbNewDelegate>(
             NativeLibrary.GetExport(_libraryHandle, "lora_db_new"));
@@ -304,6 +315,28 @@ public sealed class PInvokeLoraDbNativeBridge : ILoraDbNativeBridge
             paramsJson = paramsProp.GetRawText();
 
         return (query, paramsJson);
+    }
+
+    /// <summary>
+    /// Builds an actionable message for a failed native load. The default
+    /// library name means the caller wanted embedded mode out of the box, and
+    /// the most common cause is that <c>LoraDb.Client.Native</c> — the package
+    /// that ships the binaries — was never installed.
+    /// </summary>
+    private static string BuildLibraryNotFoundMessage(string requestedName, string resolvedPath)
+    {
+        var detail = string.Equals(requestedName, resolvedPath, StringComparison.Ordinal)
+            ? $"Unable to load native library '{requestedName}'."
+            : $"Unable to load native library '{requestedName}' (resolved to '{resolvedPath}').";
+
+        if (!requestedName.Equals(DefaultNativeLibraryName, StringComparison.OrdinalIgnoreCase))
+            return detail;
+
+        return detail
+               + " Embedded mode needs the lora_ffi native binary, which the LoraDb.Client package does not ship."
+               + " Install the companion package (dotnet add package LoraDb.Client.Native),"
+               + " or set LoraDbEmbeddedOpenOptions.NativeLibraryName to the full path of your own build."
+               + " HTTP mode does not need it.";
     }
 
     private static (string? ErrorCode, string Message) ParseError(string raw)

@@ -3,9 +3,10 @@
     <Authors>Harry Cordewener</Authors>
     <Company>Harry Cordewener</Company>
     <Copyright>Copyright © Harry Cordewener 2026</Copyright>
-    <!-- No repo-wide PackageLicenseExpression: every package published from this
-         repo bundles the BUSL-1.1 lora_ffi binaries alongside MIT managed code,
-         so each packable project sets PackageLicenseFile explicitly. -->
+    <!-- No repo-wide PackageLicenseExpression: LoraDb.Client is plain MIT, but
+         LoraDb.Client.Native bundles the BUSL-1.1 lora_ffi binaries alongside
+         MIT managed code and must use PackageLicenseFile instead. Each packable
+         project therefore declares its own license. -->
     <PackageProjectUrl>https://github.com/HarryCordewener/loradb-dotnet-client</PackageProjectUrl>
     <RepositoryUrl>https://github.com/HarryCordewener/loradb-dotnet-client</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

@@ -1,6 +1,8 @@
 # License
 
-This package contains code under two different licenses.
+This file ships inside the `LoraDb.Client.Native` package, which contains code
+under two different licenses. (The companion `LoraDb.Client` package ships
+managed code only and is published as plain MIT.)
 
 ## MIT — managed code authored by this project
 

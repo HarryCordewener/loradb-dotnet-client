@@ -55,6 +55,58 @@ public class NativeBridgeTests
     }
 
     [Test]
+    [NotInParallel("LibraryPathResolver")]
+    public async Task Constructor_PointsAtNativePackage_WhenDefaultLibraryIsMissing()
+    {
+        // A resolver that returns a path guarantees the load fails for a missing
+        // file regardless of what the OS search path happens to contain.
+        var missing = Path.Combine(Path.GetTempPath(), "loradb-absent-9f3c", "liblora_ffi.so");
+        var original = PInvokeLoraDbNativeBridge.LibraryPathResolver;
+        try
+        {
+            PInvokeLoraDbNativeBridge.LibraryPathResolver = _ => missing;
+
+            DllNotFoundException? caught = null;
+            try { _ = new PInvokeLoraDbNativeBridge("lora_ffi"); }
+            catch (DllNotFoundException ex) { caught = ex; }
+
+            await Assert.That(caught).IsNotNull();
+            await Assert.That(caught!.Message).Contains("LoraDb.Client.Native");
+            await Assert.That(caught.Message).Contains(missing);
+            await Assert.That(caught.InnerException).IsNotNull();
+        }
+        finally
+        {
+            PInvokeLoraDbNativeBridge.LibraryPathResolver = original;
+        }
+    }
+
+    [Test]
+    [NotInParallel("LibraryPathResolver")]
+    public async Task Constructor_OmitsNativePackageHint_ForCustomLibraryName()
+    {
+        // A caller who supplied their own library name is not missing the
+        // companion package, so the hint would be misleading.
+        var original = PInvokeLoraDbNativeBridge.LibraryPathResolver;
+        try
+        {
+            PInvokeLoraDbNativeBridge.LibraryPathResolver = _ => null;
+
+            DllNotFoundException? caught = null;
+            try { _ = new PInvokeLoraDbNativeBridge("custom_lora_build_9f3c"); }
+            catch (DllNotFoundException ex) { caught = ex; }
+
+            await Assert.That(caught).IsNotNull();
+            await Assert.That(caught!.Message).DoesNotContain("LoraDb.Client.Native");
+            await Assert.That(caught.Message).Contains("custom_lora_build_9f3c");
+        }
+        finally
+        {
+            PInvokeLoraDbNativeBridge.LibraryPathResolver = original;
+        }
+    }
+
+    [Test]
     public async Task LibraryPathResolver_IsNotNull_AfterModuleInitializer()
     {
         // LoraDbNativeLoader.Initialize() is a [ModuleInitializer] on LoraDb.Client.
