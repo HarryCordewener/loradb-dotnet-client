@@ -39,7 +39,11 @@ jobs:
           OUTPUT: RELEASE_NOTES.md
       - name: Pack
         run: |
-          RELEASE_NOTES="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
+          if [[ -f RELEASE_NOTES.md ]]; then
+            RELEASE_NOTES="$(tr '\r\n' ' ' < RELEASE_NOTES.md | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
+          else
+            RELEASE_NOTES=""
+          fi
           dotnet pack LoraDb.Client/LoraDb.Client.csproj \
             -c Release \
             -o ./artifacts \
