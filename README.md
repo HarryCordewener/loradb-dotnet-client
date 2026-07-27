@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/HarryCordewener/loradb-dotnet-client/actions/workflows/ci.yml/badge.svg)](https://github.com/HarryCordewener/loradb-dotnet-client/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/LoraDb.Client?logo=nuget)](https://www.nuget.org/packages/LoraDb.Client/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT + BUSL-1.1](https://img.shields.io/badge/License-MIT%20%2B%20BUSL--1.1-yellow.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0%20%7C%20netstandard2.1-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 A modern .NET client for [LoraDB](https://github.com/lora-db/lora) — a graph database with a Cypher-like query language — supporting both **HTTP** and **embedded** (Rust FFI via P/Invoke) modes.
@@ -148,5 +148,25 @@ Please **do not** open a public issue for vulnerabilities. See [SECURITY.md](SEC
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE). Copyright © 2026 Harry Cordewener.
+Two licenses apply, depending on which part you use.
+
+| Part | License |
+|---|---|
+| All C# source in this repo, and the managed assemblies in both packages | [MIT](LICENSE) — Copyright © 2026 Harry Cordewener |
+| The bundled `lora_ffi` native libraries (`runtimes/*/native/`) | [Business Source License 1.1](THIRD-PARTY-NOTICES.md) — Copyright LoraDB, Inc. |
+
+The native libraries are compiled from [LoraDB](https://github.com/lora-db/lora),
+which is licensed under BUSL-1.1 (SPDX: `BUSL-1.1`), not an open source license.
+Change Date 2029-04-19, after which the Change License is Apache 2.0. The
+Additional Use Grant permits internal-business and non-production use but does
+not permit offering LoraDB as a database-as-a-service, hosted API, managed
+database platform, or substantially similar hosted service for third parties.
+
+**Both `LoraDb.Client` and `LoraDb.Client.Native` bundle these binaries**, so
+the BUSL-1.1 terms apply to either package. Each package ships
+`PACKAGE-LICENSE.md` (the split) and `THIRD-PARTY-NOTICES.md` (the verbatim
+BUSL-1.1 text). Read them before use.
+
+> Versions 0.1.2 and earlier of both packages incorrectly declared `MIT` as the
+> sole NuGet license expression.
 
