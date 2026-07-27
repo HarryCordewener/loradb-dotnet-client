@@ -16,8 +16,10 @@ public class MergeIntegrationTests : IntegrationTestBase
     {
         await WithCleanDatabaseAsync(fixture, async client =>
         {
-            using var mergeResult = await client.ExecuteAsync("MERGE (n:User {email: 'first@example.com'}) RETURN n.email AS email");
-            await AssertSingleStringResult(mergeResult, "email", "first@example.com");
+            var email = $"{UniqueValue("merge-create")}@example.com";
+            using var mergeResult = await client.ExecuteAsync(
+                $"MERGE (n:User {{email: '{email}'}}) RETURN n.email AS email");
+            await AssertSingleStringResult(mergeResult, "email", email);
         });
     }
 
@@ -30,9 +32,11 @@ public class MergeIntegrationTests : IntegrationTestBase
     {
         await WithCleanDatabaseAsync(fixture, async client =>
         {
-            using var firstResult = await client.ExecuteAsync("MERGE (n:User {email: 'repeat@example.com'}) RETURN n");
-            using var secondResult = await client.ExecuteAsync("MERGE (n:User {email: 'repeat@example.com'}) RETURN n");
-            using var countResult = await client.ExecuteAsync("MATCH (n:User {email: 'repeat@example.com'}) RETURN count(n) AS total");
+            var email = $"{UniqueValue("merge-idem")}@example.com";
+            using var firstResult = await client.ExecuteAsync($"MERGE (n:User {{email: '{email}'}}) RETURN n");
+            using var secondResult = await client.ExecuteAsync($"MERGE (n:User {{email: '{email}'}}) RETURN n");
+            using var countResult = await client.ExecuteAsync(
+                $"MATCH (n:User {{email: '{email}'}}) RETURN count(n) AS total");
             await IntegrationAssertions.AssertSingleIntegerResult(countResult, "total", 1);
         });
     }
@@ -46,10 +50,11 @@ public class MergeIntegrationTests : IntegrationTestBase
     {
         await WithCleanDatabaseAsync(fixture, async client =>
         {
+            var email = $"{UniqueValue("merge-oncreate")}@example.com";
             using var firstResult = await client.ExecuteAsync(
-                "MERGE (n:User {email: 'created@example.com'}) ON CREATE SET n.createdAt = 1 RETURN n.createdAt AS createdAt");
+                $"MERGE (n:User {{email: '{email}'}}) ON CREATE SET n.createdAt = 1 RETURN n.createdAt AS createdAt");
             using var secondResult = await client.ExecuteAsync(
-                "MERGE (n:User {email: 'created@example.com'}) ON CREATE SET n.createdAt = 2 RETURN n.createdAt AS createdAt");
+                $"MERGE (n:User {{email: '{email}'}}) ON CREATE SET n.createdAt = 2 RETURN n.createdAt AS createdAt");
             await Assert.That(IntegrationAssertions.GetRowColumn(secondResult, 0, "createdAt").GetInt32()).IsEqualTo(1);
         });
     }
@@ -63,10 +68,11 @@ public class MergeIntegrationTests : IntegrationTestBase
     {
         await WithCleanDatabaseAsync(fixture, async client =>
         {
+            var email = $"{UniqueValue("merge-onmatch")}@example.com";
             using var createResult = await client.ExecuteAsync(
-                "MERGE (n:User {email: 'match@example.com'}) ON CREATE SET n.updatedAt = 0 RETURN n.email AS email");
+                $"MERGE (n:User {{email: '{email}'}}) ON CREATE SET n.updatedAt = 0 RETURN n.email AS email");
             using var matchResult = await client.ExecuteAsync(
-                "MERGE (n:User {email: 'match@example.com'}) ON MATCH SET n.updatedAt = 2 RETURN n.updatedAt AS updatedAt");
+                $"MERGE (n:User {{email: '{email}'}}) ON MATCH SET n.updatedAt = 2 RETURN n.updatedAt AS updatedAt");
             await Assert.That(IntegrationAssertions.GetRowColumn(matchResult, 0, "updatedAt").GetInt32()).IsEqualTo(2);
         });
     }
