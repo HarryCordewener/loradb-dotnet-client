@@ -1,25 +1,38 @@
 # LoraDb.Client
 
-A modern .NET client for [LoraDB](https://loradb.com), supporting:
+[![CI](https://github.com/HarryCordewener/loradb-dotnet-client/actions/workflows/ci.yml/badge.svg)](https://github.com/HarryCordewener/loradb-dotnet-client/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/LoraDb.Client?logo=nuget)](https://www.nuget.org/packages/LoraDb.Client/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-10.0%20%7C%20netstandard2.1-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-- **HTTP mode** against `lora-server` (`POST /query`)
-- **Embedded mode** via P/Invoke with `lora_ffi`
+A modern .NET client for [LoraDB](https://github.com/lora-db/lora) — a graph database with a Cypher-like query language — supporting both **HTTP** and **embedded** (Rust FFI via P/Invoke) modes.
 
-## Why use this client?
+---
 
-- Async-first API (`ExecuteAsync`)
-- Parameterized queries
-- Pluggable runtime mode (HTTP or embedded)
-- DI integration via `Microsoft.Extensions.DependencyInjection`
-- Targets **net10.0** and **netstandard2.1**
+## ✨ Features
 
-## Installation
+| Capability | Details |
+|---|---|
+| 🚀 **Async-first** | `ExecuteAsync` / `ExecuteRowsAsync<T>` returning `IAsyncEnumerable` |
+| 🔒 **Parameterized queries** | Safe, strongly-typed parameter binding |
+| 🔌 **Dual transport** | HTTP (`lora-server`) or embedded (`lora_ffi`) — swap at startup |
+| 💉 **DI-ready** | `AddLoraDb(…)` extension for `IServiceCollection` |
+| 📦 **CRUD helpers** | `CreateNodeAsync`, `FindNodesAsync`, `UpdateNodesAsync`, … |
+| 🗂️ **Batch execution** | `LoraDbBatch` — sequential, fail-fast multi-statement runner |
+| 🔧 **Management API** | Health, Explain, Profile, Snapshot, WAL status & truncate |
+| 🎯 **Multi-target** | `net10.0` and `netstandard2.1` |
+
+---
+
+## 📦 Installation
 
 ```bash
 dotnet add package LoraDb.Client
 ```
 
-## Quick start
+---
+
+## ⚡ Quick start
 
 ```csharp
 using LoraDb.Client;
@@ -43,15 +56,11 @@ public sealed class UserNameRow
 }
 ```
 
-Need low-level JSON access? `ExecuteAsync` still returns `LoraDbQueryResult` with `Root`.
+> Need low-level JSON access? `ExecuteAsync` returns `LoraDbQueryResult` with `Root`.
 
-## Usage documentation
+---
 
-For a practical, summarized guide with HTTP mode, embedded mode, DI setup, result handling, and troubleshooting, see:
-
-- [docs/USAGE.md](docs/USAGE.md)
-
-## Runtime modes
+## 🔌 Runtime modes
 
 ### HTTP mode
 
@@ -62,12 +71,10 @@ await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/
 ### Embedded mode
 
 ```csharp
+// In-memory (ephemeral)
 await using var client = LoraDbClient.CreateEmbedded();
-```
 
-Persistent embedded databases:
-
-```csharp
+// Persistent on-disk
 await using var client = LoraDbClient.CreateEmbedded(new LoraDbEmbeddedOpenOptions
 {
     DatabaseName = "app",
@@ -77,39 +84,37 @@ await using var client = LoraDbClient.CreateEmbedded(new LoraDbEmbeddedOpenOptio
 
 Embedded mode uses `lora_ffi` and expects these exported symbols:
 
-- `lora_db_new`
-- `lora_db_new_named`
-- `lora_db_new_with_wal`
+- `lora_db_new`, `lora_db_new_named`, `lora_db_new_with_wal`
 - `lora_db_free`
-- `lora_db_execute_json`
-- `lora_db_explain_json`
-- `lora_db_profile_json`
-- `lora_db_save_snapshot`
-- `lora_db_load_snapshot`
+- `lora_db_execute_json`, `lora_db_explain_json`, `lora_db_profile_json`
+- `lora_db_save_snapshot`, `lora_db_load_snapshot`
 - `lora_string_free`
 
-## Development
+---
+
+## 📖 Usage documentation
+
+For a full guide covering HTTP mode, embedded mode, DI setup, result handling, and troubleshooting, see **[docs/USAGE.md](docs/USAGE.md)**.
+
+---
+
+## 🛠️ Development
 
 ```bash
 dotnet restore LoraDb.Client.slnx
 dotnet build LoraDb.Client.slnx
-dotnet test LoraDb.Client.slnx
+dotnet test LoraDb.Client.Tests/LoraDb.Client.Tests.csproj
 ```
 
 ### Integration tests
 
-Integration tests exercise real HTTP and embedded modes.
+Integration tests exercise real HTTP and embedded modes and require:
 
-Required environment variables:
-
-- `LORADB_RUN_INTEGRATION_TESTS=1`
-- `LORADB_FFI_LIBRARY_PATH=<absolute-path-to-lora_ffi-binary>`
-
-Optional:
-
-- `LORADB_HTTP_IMAGE=<loradb-server-image>` (defaults to `ghcr.io/lora-db/lora-server:latest`)
-
-Run integration tests:
+| Variable | Description |
+|---|---|
+| `LORADB_RUN_INTEGRATION_TESTS=1` | Opt-in to run integration tests |
+| `LORADB_FFI_LIBRARY_PATH` | Absolute path to `lora_ffi` binary (embedded mode) |
+| `LORADB_HTTP_IMAGE` *(optional)* | Custom server image (defaults to `ghcr.io/lora-db/lora-server:latest`) |
 
 ```bash
 dotnet test LoraDb.Client.IntegrationTests/LoraDb.Client.IntegrationTests.csproj
@@ -126,3 +131,22 @@ The pinned upstream version is tracked in `LoraDb.Client.Native/lora-ffi.version
 # Update to a new upstream ref and persist the pin
 ./scripts/build-lora-ffi.sh --ref <tag-or-commit> --update-pin
 ```
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit conventions, branch workflow, and PR guidelines.
+
+---
+
+## 🔒 Security
+
+Please **do not** open a public issue for vulnerabilities. See [SECURITY.md](SECURITY.md) for the responsible disclosure process.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE). Copyright © 2026 Harry Cordewener.
+

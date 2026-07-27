@@ -11,7 +11,7 @@
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
 Instead, report vulnerabilities privately via
-[GitHub Security Advisories](https://github.com/HarryCordewener/loradb-client/security/advisories/new)
+[GitHub Security Advisories](https://github.com/HarryCordewener/loradb-dotnet-client/security/advisories/new)
 or by emailing the maintainer directly (see the package author metadata).
 
 We aim to acknowledge reports within **72 hours** and to provide an initial
