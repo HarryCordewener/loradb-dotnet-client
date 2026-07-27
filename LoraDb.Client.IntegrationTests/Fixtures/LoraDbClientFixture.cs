@@ -59,6 +59,14 @@ public sealed class EmbeddedClientFixture : ILoraDbClientFixture
 
         public string ExecuteJson(string requestJson) => _inner.ExecuteJson(requestJson);
 
+        public string ExplainJson(string requestJson) => _inner.ExplainJson(requestJson);
+
+        public string ProfileJson(string requestJson) => _inner.ProfileJson(requestJson);
+
+        public LoraDb.Client.Models.LoraDbSnapshotMeta SaveSnapshot(string path) => _inner.SaveSnapshot(path);
+
+        public LoraDb.Client.Models.LoraDbSnapshotMeta LoadSnapshot(string path) => _inner.LoadSnapshot(path);
+
         public void Dispose() { }
     }
 }

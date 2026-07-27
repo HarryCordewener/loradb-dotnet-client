@@ -65,11 +65,27 @@ await using var client = LoraDbClient.CreateHttp(new Uri("http://127.0.0.1:4747/
 await using var client = LoraDbClient.CreateEmbedded();
 ```
 
+Persistent embedded databases:
+
+```csharp
+await using var client = LoraDbClient.CreateEmbedded(new LoraDbEmbeddedOpenOptions
+{
+    DatabaseName = "app",
+    DatabaseDirectory = "/var/lib/loradb",
+});
+```
+
 Embedded mode uses `lora_ffi` and expects these exported symbols:
 
 - `lora_db_new`
+- `lora_db_new_named`
+- `lora_db_new_with_wal`
 - `lora_db_free`
 - `lora_db_execute_json`
+- `lora_db_explain_json`
+- `lora_db_profile_json`
+- `lora_db_save_snapshot`
+- `lora_db_load_snapshot`
 - `lora_string_free`
 
 ## Development

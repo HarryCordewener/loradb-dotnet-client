@@ -2,13 +2,16 @@
   <PropertyGroup>
     <Authors>Harry Cordewener</Authors>
     <Company>Harry Cordewener</Company>
-    <Copyright>Copyright © Harry Cordewener 2025</Copyright>
+    <Copyright>Copyright © Harry Cordewener 2026</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/HarryCordewener/loradb-client</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/HarryCordewener/loradb-client</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/HarryCordewener/loradb-dotnet-client</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HarryCordewener/loradb-dotnet-client</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>loradb;graph;database;cypher;embedded</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Version is driven by the GitHub release tag in nuget-publish.yml (-p:Version=<tag>).
+         This sentinel ensures any out-of-workflow pack is obviously not a real release. -->
+    <Version>0.0.0-dev</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

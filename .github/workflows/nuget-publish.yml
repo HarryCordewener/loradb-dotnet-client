@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   publish:
@@ -25,7 +26,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
       - name: Restore
         run: dotnet restore LoraDb.Client.slnx
-      - name: Build tests
+      - name: Build
         run: dotnet build LoraDb.Client.slnx --configuration Release --no-restore
       - name: Run tests
         run: dotnet test LoraDb.Client.slnx --configuration Release --no-restore --no-build
@@ -38,12 +39,20 @@ jobs:
           OUTPUT: RELEASE_NOTES.md
       - name: Pack
         run: |
+          RELEASE_NOTES="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
           dotnet pack LoraDb.Client/LoraDb.Client.csproj \
             -c Release \
             -o ./artifacts \
             --no-restore \
             -p:Version=${{ steps.version.outputs.version }} \
-            -p:PackageReleaseNotes="$(cat RELEASE_NOTES.md 2>/dev/null || echo '')"
+            -p:PackageReleaseNotes="${RELEASE_NOTES}"
+          dotnet pack LoraDb.Client.Native/LoraDb.Client.Native.csproj \
+            -c Release \
+            -o ./artifacts \
+            --no-restore \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -p:PackageReleaseNotes="${RELEASE_NOTES}"
+      - name: Push to NuGet.org
+        run: dotnet nuget push ./artifacts/*.nupkg --source "https://api.nuget.org/v3/index.json" --skip-duplicate
       - name: Push to GitHub Packages
-        continue-on-error: true
         run: dotnet nuget push ./artifacts/*.nupkg --api-key "${{ secrets.GITHUB_TOKEN }}" --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --skip-duplicate

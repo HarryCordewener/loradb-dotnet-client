@@ -1,3 +1,4 @@
+using LoraDb.Client.Models;
 using LoraDb.Client.Native;
 
 namespace LoraDb.Client.Tests.Helpers;
@@ -32,6 +33,28 @@ internal sealed class FakeNativeBridge : ILoraDbNativeBridge
         CallCount++;
         return _responseFactory is not null ? _responseFactory(requestJson) : _responseJson;
     }
+
+    public string ExplainJson(string requestJson) => ExecuteJson(requestJson);
+
+    public string ProfileJson(string requestJson) => ExecuteJson(requestJson);
+
+    public LoraDbSnapshotMeta SaveSnapshot(string path) => new()
+    {
+        FormatVersion = 1,
+        NodeCount = 0,
+        RelationshipCount = 0,
+        WalLsn = null,
+        Path = path
+    };
+
+    public LoraDbSnapshotMeta LoadSnapshot(string path) => new()
+    {
+        FormatVersion = 1,
+        NodeCount = 0,
+        RelationshipCount = 0,
+        WalLsn = null,
+        Path = path
+    };
 
     public void Dispose() { }
 }

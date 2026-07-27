@@ -31,6 +31,17 @@ await using var client = LoraDbClient.CreateEmbedded();
 ```
 
 > Embedded mode is not supported on `netstandard2.1`.
+> Embedded mode currently supports only `rows` query format.
+
+Persistent embedded mode (named database):
+
+```csharp
+await using var client = LoraDbClient.CreateEmbedded(new LoraDbEmbeddedOpenOptions
+{
+    DatabaseName = "app",
+    DatabaseDirectory = "/var/lib/loradb"
+});
+```
 
 ---
 
@@ -142,9 +153,30 @@ services.AddLoraDb(new LoraDbClientOptions
 Required exported symbols in native library:
 
 - `lora_db_new`
+- `lora_db_new_named`
+- `lora_db_new_with_wal`
 - `lora_db_free`
 - `lora_db_execute_json`
+- `lora_db_explain_json`
+- `lora_db_profile_json`
+- `lora_db_save_snapshot`
+- `lora_db_load_snapshot`
 - `lora_string_free`
+
+Embedded management APIs are available via `LoraDbEmbeddedManagementClient`:
+
+```csharp
+await using var embedded = LoraDbEmbeddedManagementClient.Create(new LoraDbEmbeddedOpenOptions
+{
+    DatabaseName = "app",
+    DatabaseDirectory = "/var/lib/loradb"
+});
+
+var plan = await embedded.ExplainAsync("MATCH (n) RETURN n");
+var profile = await embedded.ProfileAsync("MATCH (n) RETURN n");
+var snapshot = await embedded.SaveSnapshotAsync("/var/lib/loradb/snapshots/app.bin");
+await embedded.LoadSnapshotAsync(snapshot.Path);
+```
 
 ---
 

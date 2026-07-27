@@ -1,4 +1,5 @@
 using System.Text.Json;
+using LoraDb.Client.Models;
 using LoraDb.Client.Native;
 using LoraDb.Client.Tests.Helpers;
 using TUnit.Assertions.Extensions;
@@ -92,6 +93,32 @@ public class EmbeddedLoraDbTransportTests
     }
 
     [Test]
+    public async Task ExecuteAsync_UnsupportedFormat_ThrowsNotSupportedException()
+    {
+        var bridge = new FakeNativeBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+
+        await Assert.That(async () => await client.ExecuteAsync("MATCH (n) RETURN n", format: "graph"))
+            .ThrowsException()
+            .And
+            .IsTypeOf<NotSupportedException>();
+    }
+
+    [Test]
+    public async Task EmbeddedClient_ReportsCapabilities()
+    {
+        var bridge = new FakeNativeBridge();
+        await using var client = LoraDbClient.CreateEmbedded(bridge);
+        var provider = client as ILoraDbCapabilitiesProvider;
+
+        await Assert.That(provider).IsNotNull();
+        await Assert.That(provider!.Capabilities.SupportedResultFormats.Count).IsEqualTo(1);
+        await Assert.That(provider.Capabilities.SupportedResultFormats[0]).IsEqualTo("rows");
+        await Assert.That(provider.Capabilities.SupportsSnapshots).IsTrue();
+        await Assert.That(provider.Capabilities.SupportsWalStatus).IsFalse();
+    }
+
+    [Test]
     public async Task DisposeAsync_DisposesNativeBridge()
     {
         var bridge = new TrackingDisposeBridge();
@@ -107,6 +134,14 @@ public class EmbeddedLoraDbTransportTests
         public bool Disposed { get; private set; }
 
         public string ExecuteJson(string requestJson) => """{"rows":[]}""";
+
+        public string ExplainJson(string requestJson) => """{"query":"MATCH (n) RETURN n","shape":"readOnly","resultColumns":[],"tree":{"id":0,"operator":"Projection","details":{},"estimatedRows":null,"children":[]}}""";
+
+        public string ProfileJson(string requestJson) => """{"plan":{"query":"MATCH (n) RETURN n","shape":"readOnly","resultColumns":[],"tree":{"id":0,"operator":"Projection","details":{},"estimatedRows":null,"children":[]}},"metrics":{"totalElapsedNs":1,"totalRows":0,"mutated":false,"perOperator":{}}}""";
+
+        public LoraDbSnapshotMeta SaveSnapshot(string path) => new() { Path = path };
+
+        public LoraDbSnapshotMeta LoadSnapshot(string path) => new() { Path = path };
 
         public void Dispose() => Disposed = true;
     }

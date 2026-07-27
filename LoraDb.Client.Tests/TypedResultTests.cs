@@ -195,8 +195,8 @@ public class TypedResultTests
     public async Task ReadRowArrays_WithTypeInfo_ThrowsWhenRowsNotAnArray()
     {
         // The TypeInfo overload validates that "rows" is a JSON array.
-        var bridge = new FakeNativeBridge("""{"columns":["a"],"rows":"not-an-array"}""");
-        await using var client = LoraDbClient.CreateEmbedded(bridge);
+        var handler = RecordingHttpHandler.WithJson("""{"columns":["a"],"rows":"not-an-array"}""");
+        await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
         using var result = await client.ExecuteAsync("RETURN 1 AS a", format: "rowArrays");
 
@@ -256,8 +256,8 @@ public class TypedResultTests
     [Test]
     public async Task ReadRows_ThrowsWhenRowsMissing()
     {
-        var bridge = new FakeNativeBridge("""{"graph":{"nodes":[],"relationships":[]}}""");
-        await using var client = LoraDbClient.CreateEmbedded(bridge);
+        var handler = RecordingHttpHandler.WithJson("""{"graph":{"nodes":[],"relationships":[]}}""");
+        await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
         using var result = await client.ExecuteAsync("MATCH (n) RETURN n", format: "graph");
 
@@ -517,8 +517,8 @@ public class TypedResultTests
     public async Task ReadGraph_ThrowsWhenGraphMissing()
     {
         // "graph" is required for the graph format.
-        var bridge = new FakeNativeBridge("""{"rows":[]}""");
-        await using var client = LoraDbClient.CreateEmbedded(bridge);
+        var handler = RecordingHttpHandler.WithJson("""{"rows":[]}""");
+        await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
         using var result = await client.ExecuteAsync("MATCH (n) RETURN n", format: "graph");
 
@@ -532,8 +532,8 @@ public class TypedResultTests
     public async Task ReadCombined_ThrowsWhenDataMissing()
     {
         // "data" is required for the combined format.
-        var bridge = new FakeNativeBridge("""{"columns":["source"],"graph":{"nodes":[],"relationships":[]}}""");
-        await using var client = LoraDbClient.CreateEmbedded(bridge);
+        var handler = RecordingHttpHandler.WithJson("""{"columns":["source"],"graph":{"nodes":[],"relationships":[]}}""");
+        await using var client = LoraDbClient.CreateHttp(Endpoint, handler.BuildClient(Endpoint));
 
         using var result = await client.ExecuteAsync("MATCH (n) RETURN n", format: "combined");
 
