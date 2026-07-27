@@ -84,6 +84,32 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
 
     [Test]
     [CombinedDataSources]
+    public async Task FindNodes_WithMultipleFilters_ReturnsPreciseMatch(
+        [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
+        [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
+        ILoraDbClientFixture fixture)
+    {
+        await WithCleanDatabaseAsync(fixture, async client =>
+        {
+            var tag = UniqueValue("crud-find-multi");
+            using var _ = await client.ExecuteAsync(
+                $"CREATE (:MultiFilter {{tag: '{tag}', name: 'Alice', active: true}}), " +
+                $"       (:MultiFilter {{tag: '{tag}', name: 'Alice', active: false}}), " +
+                $"       (:MultiFilter {{tag: '{tag}', name: 'Bob', active: true}})");
+
+            var rows = new List<NodeRow>();
+            await foreach (var row in client.FindNodesAsync<NodeRow>("MultiFilter",
+                               new Dictionary<string, object?> { ["tag"] = tag, ["name"] = "Alice" }))
+                rows.Add(row);
+
+            await Assert.That(rows.Count).IsEqualTo(2);
+            foreach (var row in rows)
+                await Assert.That(row.N.Properties.GetProperty("name").GetString()).IsEqualTo("Alice");
+        });
+    }
+
+    [Test]
+    [CombinedDataSources]
     public async Task FindNodes_WithoutFilter_ReturnsAllNodesWithLabel(
         [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
         [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
@@ -91,11 +117,13 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
     {
         await WithCleanDatabaseAsync(fixture, async client =>
         {
+            var tag = UniqueValue("crud-find-all");
             using var _ = await client.ExecuteAsync(
-                "CREATE (:AllNodes {n: 1}), (:AllNodes {n: 2}), (:AllNodes {n: 3})");
+                $"CREATE (:AllNodes {{tag: '{tag}', n: 1}}), (:AllNodes {{tag: '{tag}', n: 2}}), (:AllNodes {{tag: '{tag}', n: 3}})");
 
             var rows = new List<NodeRow>();
-            await foreach (var row in client.FindNodesAsync<NodeRow>("AllNodes"))
+            await foreach (var row in client.FindNodesAsync<NodeRow>("AllNodes",
+                               new Dictionary<string, object?> { ["tag"] = tag }))
                 rows.Add(row);
 
             await Assert.That(rows.Count).IsEqualTo(3);
@@ -169,6 +197,32 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
         });
     }
 
+    [Test]
+    [CombinedDataSources]
+    public async Task UpdateNodes_MultipleProperties_AllPropertiesUpdated(
+        [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
+        [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
+        ILoraDbClientFixture fixture)
+    {
+        await WithCleanDatabaseAsync(fixture, async client =>
+        {
+            var key = UniqueValue("crud-update-multi");
+            using var _ = await client.ExecuteAsync(
+                $"CREATE (:MultiUpdate {{key: '{key}', score: 1, label: 'old', active: false}})");
+
+            var updated = new List<NodeRow>();
+            await foreach (var row in client.UpdateNodesAsync<NodeRow>("MultiUpdate",
+                               match: new Dictionary<string, object?> { ["key"] = key },
+                               properties: new Dictionary<string, object?> { ["score"] = 99, ["label"] = "new", ["active"] = true }))
+                updated.Add(row);
+
+            await Assert.That(updated.Count).IsEqualTo(1);
+            await Assert.That(updated[0].N.Properties.GetProperty("score").GetInt32()).IsEqualTo(99);
+            await Assert.That(updated[0].N.Properties.GetProperty("label").GetString()).IsEqualTo("new");
+            await Assert.That(updated[0].N.Properties.GetProperty("active").GetBoolean()).IsTrue();
+        });
+    }
+
     // ── DeleteNodesAsync ───────────────────────────────────────────────────────
 
     [Test]
@@ -206,6 +260,28 @@ public class CrudExtensionsIntegrationTests : IntegrationTestBase
             await client.DeleteNodesAsync("ClearAll");
 
             using var countResult = await client.ExecuteAsync("MATCH (n:ClearAll) RETURN count(n) AS total");
+            await Helpers.IntegrationAssertions.AssertSingleIntegerResult(countResult, "total", 0);
+        });
+    }
+
+    [Test]
+    [CombinedDataSources]
+    public async Task DeleteNodes_WithDetachFalse_RemovesIsolatedNodes(
+        [ClassDataSource<EmbeddedClientFixture>(Shared = SharedType.PerAssembly)]
+        [ClassDataSource<HttpClientFixture>(Shared = SharedType.PerAssembly)]
+        ILoraDbClientFixture fixture)
+    {
+        await WithCleanDatabaseAsync(fixture, async client =>
+        {
+            var key = UniqueValue("crud-nodetach");
+            using var _ = await client.ExecuteAsync($"CREATE (:NoDetachNode {{key: '{key}'}})");
+
+            await client.DeleteNodesAsync("NoDetachNode",
+                match: new Dictionary<string, object?> { ["key"] = key },
+                detach: false);
+
+            using var countResult = await client.ExecuteAsync(
+                $"MATCH (n:NoDetachNode {{key: '{key}'}}) RETURN count(n) AS total");
             await Helpers.IntegrationAssertions.AssertSingleIntegerResult(countResult, "total", 0);
         });
     }
